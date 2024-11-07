@@ -8,14 +8,12 @@ A lightweight, browser-based tool to lint, format, fix, minify, and prettify JSO
 - **JSON Linting**: Validate JSON syntax and highlight errors, showing the exact line and character of the issue.
 - **Fix JSON**: Automatically corrects common JSON syntax errors using JSON5, making it more forgiving for common mistakes.
 - **Minify JSON**: Compress JSON by removing whitespace, making it easier to transmit or store.
-- **Prettify JSON**: Formats JSON with indentation for improved readability, ideal for debugging or code reviews.
 - **Real-Time Linting**: Instantly checks JSON validity as you type, providing immediate feedback.
-- **Dark Mode**: Automatically adjusts to your system’s dark or light mode settings.
 - **Copy to Clipboard**: Quickly copy formatted JSON to use in other applications or share with others.
 
 ## Demo
 
-You can use this tool online at [json.echovalue.dev](https://json.echovalue.dev).
+You can use this tool online at [jsonlint.echovalue.dev](https://jsonlint.echovalue.dev).
 
 ## Getting Started
 
@@ -41,10 +39,9 @@ To run this project locally, you only need a web browser.
 
 1. Paste or type your JSON data into the provided text area.
 2. Use the buttons to:
-   - **Lint**: Check JSON validity.
+   - **Lint**: Check and Format JSON validity.
    - **Fix**: Correct common syntax errors.
    - **Minify**: Remove whitespace for a compact JSON.
-   - **Prettify**: Format JSON for readability.
    - **Copy to Clipboard**: Copy JSON data for easy sharing.
 3. Toggle **Real-Time Linting** if you’d like to validate JSON as you type.
 

@@ -132,7 +132,6 @@
         <button id="lintButton">Lint JSON</button>
         <button id="fixButton">Fix JSON</button>
         <button id="minifyButton">Minify JSON</button>
-        <button id="prettifyButton">Prettify JSON</button>
         <button id="copyButton">Copy to Clipboard</button>
         <label>
             <input type="checkbox" id="realtimeCheckbox"> Real-time Linting
@@ -156,8 +155,6 @@
                 forgiving for common mistakes.</li>
             <li><strong>Minify:</strong> Compresses JSON by removing whitespace, making it easier to transmit or store.
             </li>
-            <li><strong>Prettify:</strong> Formats JSON with indentation for improved readability, ideal for debugging
-                or code reviews.</li>
             <li><strong>Real-Time Linting:</strong> Instantly checks JSON validity as you type, providing immediate
                 feedback.</li>
             <li><strong>Copy to Clipboard:</strong> Quickly copy formatted JSON to use in other applications or share
@@ -192,7 +189,7 @@
     </section>
 
     <footer>
-        <p>Made by <a href="https://www.njoylab.com" target="_blank">njoyLab.com</a> | <a
+        <p>Made by <a href="https://www.njoylab.com" target="_blank">nJoylab.com</a> | <a
                 href="https://github.com/njoylab/json-linter-tool" target="_blank">View source on GitHub</a></p>
     </footer>
 
@@ -264,17 +261,6 @@
                 alert("Please enter valid JSON to minify.");
             }
         });
-
-        // Prettify JSON
-        document.getElementById('prettifyButton').addEventListener('click', () => {
-            try {
-                const parsedData = JSON.parse(document.getElementById('jsonInput').value);
-                document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
-            } catch (error) {
-                alert("Please enter valid JSON to prettify.");
-            }
-        });
-
 
         // Copy JSON to Clipboard
         document.getElementById('copyButton').addEventListener('click', () => {
