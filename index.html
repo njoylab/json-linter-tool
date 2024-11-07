@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Linter, Formatter, and Fixer</title>
+    <meta name="description"
+        content="Use this tool to lint, format, fix, minify, and prettify JSON data in your browser. Supports real-time linting, dark mode, and copy to clipboard for easy JSON editing.">
+
+    <!-- Link to Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+        /* Global Styles with Font */
+        body {
+            background-color: #ffffff;
+            color: #000000;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Textarea with Resizable Option */
+        #jsonInput {
+            width: 80vw;
+            height: 40vh;
+            font-size: 16px;
+            resize: vertical;
+            /* Allows vertical resizing */
+            background-color: #f9f9f9;
+            color: #000000;
+            border: 1px solid #cccccc;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-bottom: 1em;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 1em;
+        }
+
+        button,
+        label {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        label {
+            background-color: transparent;
+            color: #000;
+        }
+
+        #fixButton {
+            display: none;
+            /* Hidden until needed */
+        }
+
+        /* Dark mode styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #ffffff;
+            }
+
+            #jsonInput {
+                background-color: #1e1e1e;
+                color: #ffffff;
+                border: 1px solid #333333;
+            }
+
+            button,
+            label {
+                background-color: #4a90e2;
+                color: #ffffff;
+            }
+        }
+
+        /* Footer styling */
+        footer {
+            margin-top: 2em;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/json5@2.2.3/dist/index.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>JSON Linter, Formatter, and Fixer Tool</h1>
+        <h2>Validate, Format, and Optimize JSON Instantly</h2>
+    </header>
+
+    <textarea id="jsonInput" placeholder="Enter JSON here"></textarea>
+
+    <div class="button-row">
+        <button id="lintButton">Lint JSON</button>
+        <button id="fixButton">Fix JSON</button>
+        <button id="minifyButton">Minify JSON</button>
+        <button id="prettifyButton">Prettify JSON</button>
+        <button id="copyButton">Copy to Clipboard</button>
+        <label>
+            <input type="checkbox" id="realtimeCheckbox"> Real-time Linting
+        </label>
+    </div>
+
+    <p id="resultMessage" style="font-weight: bold;"></p>
+
+    <section>
+        <h3>What is JSON?</h3>
+        <p>JSON (JavaScript Object Notation) is a lightweight data-interchange format that's easy for humans to read and
+            write. It's commonly used for transmitting data in web applications, allowing client-side and server-side
+            applications to communicate efficiently.</p>
+
+        <h3>Features of This JSON Linter Tool</h3>
+        <p>This JSON tool provides multiple features to help you work with JSON data easily:</p>
+        <ul>
+            <li><strong>Linting:</strong> Validates JSON syntax and highlights errors, showing the exact line and
+                character of the issue.</li>
+            <li><strong>Fix JSON:</strong> Automatically corrects common JSON syntax errors using JSON5, making it more
+                forgiving for common mistakes.</li>
+            <li><strong>Minify:</strong> Compresses JSON by removing whitespace, making it easier to transmit or store.
+            </li>
+            <li><strong>Prettify:</strong> Formats JSON with indentation for improved readability, ideal for debugging
+                or code reviews.</li>
+            <li><strong>Real-Time Linting:</strong> Instantly checks JSON validity as you type, providing immediate
+                feedback.</li>
+            <li><strong>Copy to Clipboard:</strong> Quickly copy formatted JSON to use in other applications or share
+                with others.</li>
+        </ul>
+
+        <h3>How to Use the JSON Linter Tool</h3>
+        <p>Simply paste your JSON data into the text area and use the buttons to lint, fix, format, or minify your JSON.
+            You can enable real-time linting for instant feedback as you type. The tool provides detailed error messages
+            for invalid JSON, making it easier to locate and fix issues.</p>
+
+        <h3>Benefits of JSON Linting and Formatting</h3>
+        <p>Proper JSON formatting is essential for readability and collaboration. Linting helps ensure that JSON data is
+            correctly structured, preventing errors in web applications that rely on this data. Minifying JSON reduces
+            file size, improving application performance and reducing bandwidth usage.</p>
+
+        <h3>FAQs</h3>
+        <p><strong>What is a JSON linter?</strong> A JSON linter checks JSON data for syntax errors, helping identify
+            issues that could cause problems when transmitting data between systems.</p>
+        <p><strong>How does JSON5 help fix JSON?</strong> JSON5 is a JSON extension that supports common syntax
+            mistakes, such as missing quotes and trailing commas, making it easier to correct JSON errors.</p>
+        <p><strong>Where can I provide feedback or report issues?</strong> For feedback or to report issues, please
+            visit our <a href="https://github.com/yourusername/json-linter-tool" target="_blank">GitHub repository</a>.
+        </p>
+    </section>
+
+    <footer>
+        <p>Made by <a href="https://www.njoylab.com" target="_blank">njoyLab.com</a> | <a
+                href="https://github.com/yourusername/json-linter-tool" target="_blank">View source on GitHub</a></p>
+    </footer>
+
+    <script>
+        function lintJson() {
+            const jsonInput = document.getElementById('jsonInput');
+            const resultMessage = document.getElementById('resultMessage');
+            const fixButton = document.getElementById('fixButton');
+
+            try {
+                const parsedData = JSON.parse(jsonInput.value);
+                jsonInput.value = JSON.stringify(parsedData, null, 2); // Pretty-print JSON
+                jsonInput.style.borderColor = 'green';
+                resultMessage.textContent = "Valid JSON!";
+                resultMessage.style.color = 'green';
+                fixButton.style.display = 'none'; // Hide fix button if JSON is valid
+            } catch (error) {
+                jsonInput.style.borderColor = 'red';
+                const position = error.message.match(/position (\d+)/);
+                if (position) {
+                    const charIndex = parseInt(position[1]);
+                    const lines = jsonInput.value.substr(0, charIndex).split('\n');
+                    const line = lines.length;
+                    const column = lines[lines.length - 1].length + 1;
+                    resultMessage.textContent = `Invalid JSON at line ${line}, column ${column}: ${error.message}`;
+                } else {
+                    resultMessage.textContent = `Invalid JSON: ${error.message}`;
+                }
+                resultMessage.style.color = 'red';
+                fixButton.style.display = 'inline'; // Show fix button if JSON is invalid
+            }
+        }
+
+        document.getElementById('lintButton').addEventListener('click', lintJson);
+
+        // Toggle real-time linting based on checkbox
+        document.getElementById('realtimeCheckbox').addEventListener('change', (event) => {
+            const jsonInput = document.getElementById('jsonInput');
+            if (event.target.checked) {
+                jsonInput.addEventListener('input', lintJson);
+            } else {
+                jsonInput.removeEventListener('input', lintJson);
+            }
+        });
+
+        // Fix JSON using JSON5
+        document.getElementById('fixButton').addEventListener('click', () => {
+            const jsonInput = document.getElementById('jsonInput');
+            const resultMessage = document.getElementById('resultMessage');
+
+            try {
+                const parsedData = JSON5.parse(jsonInput.value); // Try to parse with JSON5
+                jsonInput.value = JSON.stringify(parsedData, null, 2); // Pretty-print fixed JSON back to textarea
+                resultMessage.textContent = "Fixed JSON!";
+                resultMessage.style.color = 'orange';
+                jsonInput.style.borderColor = 'green';
+            } catch (error) {
+                resultMessage.textContent = "Could not fix JSON: " + error.message;
+                resultMessage.style.color = 'red';
+            }
+        });
+
+        // Minify JSON
+        document.getElementById('minifyButton').addEventListener('click', () => {
+            try {
+                const parsedData = JSON.parse(document.getElementById('jsonInput').value);
+                document.getElementById('jsonInput').value = JSON.stringify(parsedData);
+            } catch (error) {
+                alert("Please enter valid JSON to minify.");
+            }
+        });
+
+        // Prettify JSON
+        document.getElementById('prettifyButton').addEventListener('click', () => {
+            try {
+                const parsedData = JSON.parse(document.getElementById('jsonInput').value);
+                document.getElementById('jsonInput').value = JSON.stringify(parsedData, null, 2);
+            } catch (error) {
+                alert("Please enter valid JSON to prettify.");
+            }
+        });
+
+
+        // Copy JSON to Clipboard
+        document.getElementById('copyButton').addEventListener('click', () => {
+            const jsonInput = document.getElementById('jsonInput');
+            jsonInput.select();
+            document.execCommand('copy');
+            alert("JSON copied to clipboard!");
+        });
+    </script>
+</body>
+
+</html>
