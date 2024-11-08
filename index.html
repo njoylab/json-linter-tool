@@ -49,7 +49,7 @@
         /* Textarea with Resizable Option */
         #jsonInput {
             width: 80vw;
-            height: 40vh;
+            height: 60vh;
             font-size: 16px;
             background-color: #f9f9f9;
             color: #000000;
@@ -197,13 +197,12 @@
         }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/json5@2.2.3/dist/index.min.js"></script>
+    <script src="jsonrepair.min.js"></script>
 </head>
 
 <body>
     <header>
         <h1>JSON Linter, Formatter, and Fixer Tool</h1>
-        <h2>Validate, Format, and Optimize JSON Instantly</h2>
     </header>
 
     <!-- Container for line numbers and textarea -->
@@ -231,7 +230,6 @@
 
     <div class="button-row">
         <button id="lintButton">Lint JSON</button>
-        <button id="fixButton">Fix JSON</button>
         <button id="minifyButton">Minify JSON</button>
         <label>
             <input type="checkbox" id="realtimeCheckbox"> Real-time Linting
@@ -251,7 +249,8 @@
         <ul>
             <li><strong>Linting:</strong> Validates JSON syntax and highlights errors, showing the exact line and
                 character of the issue.</li>
-            <li><strong>Fix JSON:</strong> Automatically corrects common JSON syntax errors using JSON5, making it more
+            <li><strong>Fix JSON:</strong> Automatically corrects common JSON syntax errors using <a
+                    href="https://github.com/njoylab/jsonrepair" target="_blank">JSONRepair</a>, making it more
                 forgiving for common mistakes.</li>
             <li><strong>Minify:</strong> Compresses JSON by removing whitespace, making it easier to transmit or store.
             </li>
@@ -275,9 +274,6 @@
         <p>- <strong>What is a JSON linter?</strong></p>
         <p>A JSON linter checks JSON data for syntax errors, helping identify
             issues that could cause problems when transmitting data between systems.</p>
-        <p>- <strong>How does JSON5 help fix JSON?</strong></p>
-        <p>JSON5 is a JSON extension that supports common syntax
-            mistakes, such as missing quotes and trailing commas, making it easier to correct JSON errors.</p>
         <p>- <strong>Where can I provide feedback or report issues?</strong></p>
         <p>For feedback or to report issues, please
             visit our <a href="https://github.com/yourusername/json-linter-tool" target="_blank">GitHub repository</a>.
@@ -323,6 +319,7 @@
                 resultMessage.style.color = 'red';
                 fixButton.style.display = 'inline'; // Show fix button if JSON is invalid
             }
+            updateLineNumbers();
         }
 
         document.getElementById('lintButton').addEventListener('click', lintJson);
@@ -337,17 +334,20 @@
             }
         });
 
-        // Fix JSON using JSON5
+        // Fix JSON using JSONRepair
         document.getElementById('fixButton').addEventListener('click', () => {
             const jsonInput = document.getElementById('jsonInput');
             const resultMessage = document.getElementById('resultMessage');
 
             try {
-                const parsedData = JSON5.parse(jsonInput.value); // Try to parse with JSON5
-                jsonInput.value = JSON.stringify(parsedData, null, 2); // Pretty-print fixed JSON back to textarea
+                const { jsonrepair } = JSONRepair
+                const parsedData = jsonrepair(jsonInput.value); // Try to parse with JSONRepair
+                const j = JSON.parse(parsedData);
+                jsonInput.value = JSON.stringify(j, null, 2); // Pretty-print fixed JSON back to textarea
                 resultMessage.textContent = "Fixed JSON!";
                 resultMessage.style.color = 'orange';
                 jsonInput.style.borderColor = 'green';
+                updateLineNumbers();
             } catch (error) {
                 resultMessage.textContent = "Could not fix JSON: " + error.message;
                 resultMessage.style.color = 'red';
