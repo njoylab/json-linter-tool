@@ -27,13 +27,29 @@
             align-items: center;
         }
 
+        .container {
+            display: flex;
+            width: 80vw;
+        }
+
+        .line-numbers {
+            font-size: 11px;
+            line-height: 19px;
+            background-color: #f0f0f0;
+            color: #888;
+            text-align: right;
+            user-select: none;
+            font-family: monospace;
+            overflow-y: hidden;
+            padding: 10px;
+            margin-bottom: 1em;
+        }
+
         /* Textarea with Resizable Option */
         #jsonInput {
             width: 80vw;
             height: 40vh;
             font-size: 16px;
-            resize: vertical;
-            /* Allows vertical resizing */
             background-color: #f9f9f9;
             color: #000000;
             border: 1px solid #cccccc;
@@ -85,6 +101,11 @@
                 border: 1px solid #333333;
             }
 
+            .line-numbers {
+                background-color: #2e2e2e;
+                color: #ffffff;
+            }
+
             button,
             label {
                 background-color: #4a90e2;
@@ -126,7 +147,11 @@
         <h2>Validate, Format, and Optimize JSON Instantly</h2>
     </header>
 
-    <textarea id="jsonInput" placeholder="Enter JSON here"></textarea>
+    <!-- Container for line numbers and textarea -->
+    <div class="container">
+        <div class="line-numbers" id="lineNumbers">1</div>
+        <textarea id="jsonInput" placeholder="Enter JSON here"></textarea>
+    </div>
 
     <div class="button-row">
         <button id="lintButton">Lint JSON</button>
@@ -269,6 +294,41 @@
             document.execCommand('copy');
             alert("JSON copied to clipboard!");
         });
+
+        // Line numbers
+        const jsonInput = document.getElementById('jsonInput');
+        const lineNumbers = document.getElementById('lineNumbers');
+        updateLineNumberHeight();
+
+        function updateLineNumberHeight() {
+            const bottomPadding = 18;
+            lineNumbers.style.height = jsonInput.clientHeight - bottomPadding + 'px';
+        }
+
+        // Function to update line numbers
+        function updateLineNumbers() {
+            if (jsonInput.value === '') {
+                lineNumbers.innerHTML = '';
+                return;
+            }
+            const lines = jsonInput.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+        }
+
+
+        // Event listeners to update line numbers on input, scroll, and resize
+        jsonInput.addEventListener('input', updateLineNumbers);
+        jsonInput.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = jsonInput.scrollTop;
+        });
+        jsonInput.addEventListener('keyup', updateLineNumbers);
+
+        // Event listener to update line numbers on resize
+        new ResizeObserver(outputsize => {
+            updateLineNumberHeight();
+        }).observe(jsonInput);
+        // Initialize line numbers on page load
+        updateLineNumbers();
     </script>
 </body>
 
