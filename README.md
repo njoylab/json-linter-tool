@@ -6,7 +6,7 @@ A lightweight, browser-based tool to lint, format, fix, minify, and prettify JSO
 ## Features
 
 - **JSON Linting**: Validate JSON syntax and highlight errors, showing the exact line and character of the issue.
-- **Fix JSON**: Automatically corrects common JSON syntax errors using JSON5, making it more forgiving for common mistakes.
+- **Fix JSON**: Automatically corrects common JSON syntax errors using [JSONRepair](https://github.com/njoylab/jsonrepair), making it more forgiving for common mistakes.
 - **Minify JSON**: Compress JSON by removing whitespace, making it easier to transmit or store.
 - **Real-Time Linting**: Instantly checks JSON validity as you type, providing immediate feedback.
 - **Copy to Clipboard**: Quickly copy formatted JSON to use in other applications or share with others.
