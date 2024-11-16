@@ -407,3 +407,22 @@ footer {
     background-color: var(--background-light);
     color: var(--text-color);
 }
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+    .shortcut {
+        display: none;
+        /* Hide shortcut elements */
+    }
+
+    .right-nav {
+        width: 100vw;
+        /* Make right-nav fullscreen */
+        height: 100vh;
+        top: 0;
+        right: 0;
+        position: fixed;
+        z-index: 1000;
+        /* Ensure it is on top */
+    }
+}
