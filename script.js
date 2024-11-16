@@ -10,32 +10,35 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
+function getEditorContent() {
+    return editor.innerText.replaceAll(' ', '');
+}
+
 /**
  * Handles input events in the editor, including syntax highlighting and cursor position
  * @param {InputEvent} event - The input event object
  */
 function handleEditorInput(event) {
     const lastCharInput = event.data;
-    debounce(() => {
-        try {
-            const text = editor.innerText;
-            const currentTextLength = text.length;
-            if (text.trim()) {
-                let range = saveCursorPosition();
-                // if last character is a newline, move the cursor one position to the right
-                const isDelete = currentTextLength < charCount;
-                if (lastCharInput === null && !isDelete) {
-                    range = range + 1;
-                }
-                editor.innerHTML = highlightJSON(text);
-                restoreCursorPosition(range);
-                charCount = currentTextLength;
-            }
-        } catch (e) {
-            console.log('Highlighting error:', e);
+    if (!lastCharInput) {
+        updateLineNumbers();
+        return;
+
+    }
+    //  debounce(() => {
+
+    try {
+        const text = getEditorContent();
+        if (text.trim()) {
+            let range = saveCursorPosition();
+            // Use the modified highlightJSON function
+            editor.innerHTML = highlightJSON(text);
+            restoreCursorPosition(range);
         }
-    }, 500)();
-    updateLineNumbers();
+    } catch (e) {
+        console.log('Highlighting error:', e);
+    }
+    //}, 1500)();
 }
 
 /**
@@ -64,29 +67,18 @@ function handlePaste(e) {
 }
 
 /**
- * Handles clicks on line numbers to toggle code folding
- * @param {MouseEvent} e - The click event object
- */
-function handleLineNumberClick(e) {
-    const lineNumber = e.target.dataset.line;
-    if (lineNumber !== undefined) {
-        toggleCollapse(parseInt(lineNumber));
-    }
-}
-
-/**
  * Creates a debounced version of a function
  * @param {Function} func - The function to debounce
  * @param {number} wait - The debounce delay in milliseconds
  * @returns {Function} The debounced function
  */
-function debounce(func, wait) {
+/*function debounce(func, wait) {
     let timeout;
     return function () {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, arguments), wait);
     };
-}
+}*/
 
 /**
  * Updates the line numbers in the editor gutter
@@ -94,16 +86,42 @@ function debounce(func, wait) {
  * @returns {void} 
  */
 function updateLineNumbers() {
-    const content = editor.innerText;
-    const lines = content.split('\n');
-    if (lines[lines.length - 1] === '') lines.pop();
-    lineNumbers.innerHTML = lines.map((line, index) => {
-        const isCollapsible = isObjectOrArrayLine(line);
-        const lineClass = isCollapsible ? 'collapsible-line' : '';
-        return `<div data-line="${index}" class="${lineClass}">${index + 1}</div>`;
-    }).join('');
-}
+    const contentLines = editor.querySelectorAll('.code-line');
+    const lineNumberHTML = [];
+    let i = 0;
 
+    while (i < contentLines.length) {
+        const line = contentLines[i];
+        const isCollapsed = line.classList.contains('collapsed');
+        const isHidden = line.style.display === 'none';
+        const lineText = line.textContent;
+        const isCollapsible = isObjectOrArrayLine(lineText.trim());
+        const lineClass = isCollapsible ? 'collapsible-line' : '';
+        const collapseIndicator = isCollapsible ? (isCollapsed ? '▶' : '▼') : '';
+        const lineNumber = i + 1;
+
+        if (isCollapsed) {
+            // Add line number for the collapsed line
+            lineNumberHTML.push(`<div data-line="${i}" class="${lineClass}" data-indicator="${collapseIndicator}">${lineNumber}</div>`);
+
+            // Find matching closing brace/bracket
+            const matchingLine = findMatchingBraceInEditor(Array.from(contentLines), i);
+            const collapsedLinesCount = matchingLine - i;
+
+            // Skip collapsed lines
+            i = matchingLine + 1;
+        } else if (isHidden) {
+            // Skip hidden lines (they are part of a collapsed block)
+            i++;
+        } else {
+            // Add line number for visible line
+            lineNumberHTML.push(`<div data-line="${i}" class="${lineClass}" data-indicator="${collapseIndicator}">${lineNumber}</div>`);
+            i++;
+        }
+    }
+
+    lineNumbers.innerHTML = lineNumberHTML.join('');
+}
 /**
  * Displays a toast message to the user
  * @param {string} message - The message to display
@@ -123,7 +141,7 @@ function showToast(message, type = 'success') {
  * @returns {boolean} True if editor is empty, false otherwise
  */
 function isEditorEmpty() {
-    if (editor.innerText.trim() === '') {
+    if (getEditorContent().trim() === '') {
         showToast('Editor is empty', 'error');
         return true;
     }
@@ -140,15 +158,17 @@ function lintCode() {
     }
 
     try {
-        const content = editor.innerText;
+        const content = getEditorContent();
         const parsed = JSON.parse(content);
         const jsonContent = JSON.stringify(parsed, null, 2);
         editor.innerHTML = highlightJSON(jsonContent);
+        restoreCursorPosition(content.length);
     } catch (error) {
+        console.log(error);
         fixCode();
     }
     // put the cursor at the end of the text
-    restoreCursorPosition(editor.innerText.length);
+
     updateLineNumbers();
 }
 
@@ -177,7 +197,7 @@ function minifyCode() {
     }
 
     try {
-        const content = editor.innerText;
+        const content = getEditorContent();
         const parsed = JSON.parse(content);
         editor.innerHTML = highlightJSON(JSON.stringify(parsed));
     } catch (error) {
@@ -222,22 +242,63 @@ function clearCode() {
  */
 function highlightJSON(text) {
     text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return text.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
-        let cls = 'json-number';
-        if (/^"/.test(match)) {
-            if (/:$/.test(match)) {
-                cls = 'json-key';
-                match = match.slice(0, -1);
-            } else {
-                cls = 'json-string';
-            }
-        } else if (/true|false/.test(match)) {
-            cls = 'json-boolean';
-        } else if (/null/.test(match)) {
-            cls = 'json-null';
+
+    const lines = text.split('\n');
+
+    const highlightedLines = lines.map(line => {
+        // Match key and any following structure
+        const keyMatch = line.match(/^(\s*"[^"]*"\s*:\s*)([\{\[])?(.*)$/);
+        if (keyMatch) {
+            const indent = keyMatch[1].match(/^\s*/)[0];
+            const keyPart = keyMatch[1].trim();
+            const bracePart = keyMatch[2] || '';
+            const restOfLine = keyMatch[3];
+
+            const highlightedIndent = indent.replace(/\s/g, '&nbsp;');
+            const highlightedKey = keyPart.replace(/(".*?")(\s*:)/, (match, p1, p2) => {
+                return `<span class="json-key">${p1}</span>${p2}`;
+            });
+
+            const highlightedBrace = bracePart ? `<span class="json-brace">${bracePart}</span>` : '';
+            const highlightedRest = restOfLine.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^\\"]|[^\\"])*"|[\{\}\[\]]|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|,)/g, match => {
+                return highlightMatch(match);
+            });
+            return `<div class="code-line">${highlightedIndent}${highlightedKey}${highlightedBrace}${highlightedRest}</div>`;
+        } else {
+            // Regular line highlighting
+            const indentMatch = line.match(/^\s*/);
+            const indent = indentMatch ? indentMatch[0] : '';
+            const highlightedIndent = indent.replace(/\s/g, '&nbsp;');
+
+            const restOfLine = line.substring(indent.length);
+            const highlightedLine = restOfLine.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^\\"]|[^\\"])*"|[\{\}\[\]]|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|,)/g, match => {
+                return highlightMatch(match);
+            });
+            return `<div class="code-line">${highlightedIndent}${highlightedLine}</div>`;
         }
-        return cls === 'json-key' ? `<span class="${cls}">${match}</span>:` : `<span class="${cls}">${match}</span>`;
     });
+    return highlightedLines.join('');
+}
+
+/**
+ * Highlights a match in the JSON text
+ * @param {string} match - The match to highlight
+ * @returns {string} HTML string with highlighted match
+ */
+function highlightMatch(match) {
+    let cls = 'json-number';
+    if (/^"/.test(match)) {
+        cls = 'json-string';
+    } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+    } else if (/null/.test(match)) {
+        cls = 'json-null';
+    } else if (/[\{\}\[\]]/.test(match)) {
+        cls = 'json-brace';
+    } else if (/^,$/.test(match)) {
+        cls = 'json-comma';
+    }
+    return `<span class="${cls}">${match}</span>`;
 }
 
 /**
@@ -247,7 +308,7 @@ function highlightJSON(text) {
  */
 async function copyContent() {
     try {
-        const content = editor.innerText;
+        const content = getEditorContent();
         await navigator.clipboard.writeText(content);
         const copyButton = document.querySelector('.copy-button');
         const originalText = copyButton.innerHTML;
@@ -264,46 +325,12 @@ async function copyContent() {
 }
 
 /**
- * Toggles code block collapse state
- * @param {number} lineNumber - The line number to toggle
- */
-function toggleCollapse(lineNumber) {
-    const codeLineElements = editor.childNodes;
-    const lineElement = codeLineElements[lineNumber];
-    const line = lineElement.textContent.trim();
-    if (!isObjectOrArrayLine(line)) return;
-
-    const endLine = findMatchingBrace(codeLineElements, lineElement);
-    if (endLine === -1) return;
-
-    const isCurrentlyCollapsed = lineElement.classList.contains('collapsed-line');
-
-    if (!isCurrentlyCollapsed) {
-        for (let i = lineNumber + 1; i < endLine; i++) {
-            codeLineElements[i].classList.add('hidden-line');
-        }
-        lineElement.classList.add('collapsed-line');
-        const placeholder = document.createElement('div');
-        placeholder.className = 'collapse-placeholder';
-        placeholder.textContent = `... ${endLine - lineNumber - 1} lines hidden ...`;
-        placeholder.addEventListener('click', () => toggleCollapse(lineNumber));
-        lineElement.parentNode.insertBefore(placeholder, codeLineElements[endLine]);
-    } else {
-        for (let i = lineNumber + 1; i < endLine; i++) {
-            codeLineElements[i].classList.remove('hidden-line');
-        }
-        lineElement.classList.remove('collapsed-line');
-        const placeholder = lineElement.parentNode.querySelector('.collapse-placeholder');
-        if (placeholder) placeholder.remove();
-    }
-}
-/**
  * Checks if a line contains an opening brace/bracket for an object/array
  * @param {string} line - The line of code to check
- * @returns {boolean} True if line ends with { or [, false otherwise
+ * @returns {boolean} True if line contains { or [, false otherwise
  */
 function isObjectOrArrayLine(line) {
-    return /[{\[][ ]*$/.test(line.trim());
+    return /[\{\[]/.test(line.trim());
 }
 
 /**
@@ -313,8 +340,6 @@ function isObjectOrArrayLine(line) {
  * @returns {number} The line number of the matching closing brace, or -1 if not found
  */
 function findMatchingBrace(lines, startLine) {
-    const startChar = lines[startLine].trim().slice(-1);
-    const endChar = startChar === '{' ? '}' : ']';
     let depth = 1;
 
     for (let i = startLine + 1; i < lines.length; i++) {
@@ -348,14 +373,6 @@ function restoreCursorPosition(saved) {
     return false;
 }
 
-/**
- * Synchronizes scrolling between the line numbers and editor
- * Makes the line numbers scroll in sync with the editor content
- * @returns {void}
- */
-function syncScroll() {
-    lineNumbers.scrollTop = editor.scrollTop;
-}
 
 // CaretUtil library, based on
 // https://stackoverflow.com/questions/6249095/41034697#41034697
@@ -375,6 +392,7 @@ CaretUtil.setCaretPosition = function (container, position) {
         }
     }
 };
+
 
 /**
  * Get the current caret position inside a contentEditable container
@@ -657,11 +675,125 @@ function downloadJSON() {
     URL.revokeObjectURL(url);
 }
 
+/**
+ * Finds the matching closing brace/bracket for an opening one in the editor content
+ * @param {Array} lines - The array of code line elements
+ * @param {number} startLine - The line number containing the opening brace
+ * @returns {number} The line number of the matching closing brace, or -1 if not found
+ */
+function findMatchingBraceInEditor(lines, startLine) {
+    const startText = lines[startLine].textContent;
+    const startCharMatch = startText.match(/[\{\[]/);
+    if (!startCharMatch) return -1;
+
+    const startChar = startCharMatch[0];
+    const endChar = startChar === '{' ? '}' : ']';
+    let depth = 1;
+
+    for (let i = startLine + 1; i < lines.length; i++) {
+        const lineText = lines[i].textContent;
+        for (let char of lineText) {
+            if (char === startChar) depth++;
+            if (char === endChar) depth--;
+            if (depth === 0) return i;
+        }
+    }
+    return -1;
+}
+
+/**
+ * Toggles code block collapse state
+ * @param {number} lineNumber - The line number to toggle
+ */
+/**
+ * Toggles collapse/expand of code blocks in the editor
+ * @param {number} startLine - The line number where the block starts
+ */
+function toggleCollapse(startLine) {
+    const editorLines = editor.querySelectorAll('.code-line');
+    const contentLines = Array.from(editorLines);
+
+    const matchingLine = findMatchingBraceInEditor(contentLines, startLine);
+
+    if (matchingLine === -1) {
+        return;
+    }
+
+    // Toggle collapsed state
+    const isCollapsed = contentLines[startLine].classList.contains('collapsed');
+
+    if (isCollapsed) {
+        // Expand
+        for (let i = startLine + 1; i <= matchingLine; i++) {
+            contentLines[i].style.display = '';
+        }
+        // Restore original content
+        const originalContent = contentLines[startLine].dataset.originalContent;
+        if (originalContent) {
+            contentLines[startLine].innerHTML = originalContent;
+        }
+        contentLines[startLine].classList.remove('collapsed');
+
+        // If there is a comma on the line after the collapsed block, hide it
+        if (contentLines[matchingLine + 1] && contentLines[matchingLine + 1].classList.contains('comma-line')) {
+            contentLines[matchingLine + 1].style.display = 'none';
+        }
+    } else {
+        // Collapse
+        for (let i = startLine + 1; i <= matchingLine; i++) {
+            contentLines[i].style.display = 'none';
+        }
+        // Check for comma after the block
+        const l = contentLines[matchingLine].textContent.trim();
+        let hasComma = l.length > 0 && l[l.length - 1] === ',';
+
+        if (contentLines[matchingLine + 1]) {
+            const nextLineText = contentLines[matchingLine + 1].textContent.trim();
+            if (nextLineText === ',') {
+                hasComma = true;
+                contentLines[matchingLine + 1].classList.add('comma-line');
+                contentLines[matchingLine + 1].style.display = 'none';
+            }
+        }
+
+        // Modify the starting line to indicate collapsed block
+        const lineContent = contentLines[startLine].innerHTML;
+        contentLines[startLine].dataset.originalContent = lineContent;
+
+        // Determine the opening and closing brace/bracket
+        const startText = contentLines[startLine].textContent;
+        const startCharMatch = startText.match(/[\{\[]/);
+        const startChar = startCharMatch ? startCharMatch[0] : '';
+        const endChar = startChar === '{' ? '}' : startChar === '[' ? ']' : '';
+        // check if the line has a comma
+        //hasComma = contentLines[matchingLine].textContent.trim() === ',';
+
+        // Update line content to show collapsed indicator
+        contentLines[startLine].innerHTML = lineContent.replace(
+            /([\{\[])/,
+            `$1<span class="ellipsis">...${endChar}${hasComma ? ',' : ''}</span>`
+        );
+        contentLines[startLine].classList.add('collapsed');
+    }
+    updateLineNumbers();
+}
+
 editor.addEventListener('input', handleEditorInput);
 editor.addEventListener('paste', handlePaste);
-lineNumbers.addEventListener('click', handleLineNumberClick);
-editor.addEventListener('scroll', syncScroll);
+/**
+ * Handles clicks on line numbers to collapse or expand code blocks
+ */
+lineNumbers.addEventListener('click', function (e) {
+    const target = e.target;
 
+    if (target.classList.contains('collapsible-line')) {
+        const lineIndex = parseInt(target.dataset.line);
+        toggleCollapse(lineIndex);
+    } else if (target.classList.contains('collapsed-lines')) {
+        // Ignore clicks on the collapsed lines placeholder
+        return;
+    }
+});
 document.addEventListener('keydown', function (event) {
     if (event.ctrlKey && event.altKey) {
         switch (event.key.toLowerCase()) {

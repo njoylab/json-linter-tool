@@ -39,7 +39,6 @@
 
     .line-numbers {
         background-color: var(--background-dark);
-        border-right: 1px solid #444;
     }
 
     .toast {
@@ -93,7 +92,6 @@ button:hover,
     background-color: var(--hover-color);
 }
 
-/* Other styles */
 body {
     margin: 0;
     padding: 0;
@@ -103,42 +101,39 @@ body {
 }
 
 .editor-container {
-    display: flex;
     position: relative;
     height: 100vh;
-    margin: 0;
-    border: none;
-    box-sizing: border-box;
+}
+
+/* Set up the scroll wrapper */
+.scroll-wrapper {
+    display: flex;
+    height: 100vh;
+    overflow: auto;
+    position: relative;
 }
 
 .line-numbers {
-    position: absolute;
-    top: 0;
-    left: 0;
+    flex: 0 0 auto;
     height: 100%;
-    overflow: hidden;
-    background-color: var(--background-dark);
-    border-right: 1px solid #ccc;
+    width: 40px;
     text-align: right;
-    user-select: none;
+    font-size: 14px;
+    line-height: 20px;
     font-family: monospace;
-    min-width: 3ch;
-    padding-right: 10px;
-    padding-top: 10px;
 }
 
 .editable-div {
-    flex-grow: 1;
-    height: 100%;
-    padding: 10px;
-    white-space: pre;
-    overflow: auto;
-    font-family: monospace;
-    resize: none;
-    outline: none;
+    flex: 1 1 auto;
+    padding-left: 10px;
     box-sizing: border-box;
-    tab-size: 2;
-    margin-left: 30px;
+    font-size: 14px;
+    line-height: 20px;
+    font-family: monospace;
+}
+
+.editable-div::-webkit-scrollbar {
+    display: none;
 }
 
 .floating-buttons {
@@ -258,13 +253,11 @@ body {
 
 }
 
-.collapsed,
 .hidden-line {
     display: none;
 }
 
 .collapsed-line {
-    text-decoration: underline;
     color: var(--primary-color);
 }
 
@@ -444,6 +437,42 @@ footer {
         margin-top: 50px;
         margin-bottom: 20px;
     }
+}
 
+
+/* Add these styles to your styles.css */
+
+.code-line {
+    white-space: pre-wrap;
+}
+
+
+.line-numbers .collapsible-line {
+    cursor: pointer;
+    color: var(--primary-color);
+    background-color: var(--background-dark);
+    box-sizing: border-box;
+    padding-right: 10px;
+    width: 100%;
+    border-right: 1px solid #444;
+
+}
+
+
+/* Indicate collapsed or expanded state */
+.line-numbers .collapsible-line::after {
+    content: attr(data-indicator);
+    font-size: 8px;
+    margin-left: 2px;
+    line-height: 10px;
+    vertical-align: middle;
+}
+
+.line-numbers div:not(.collapsible-line) {
+    background-color: var(--background-dark);
+    box-sizing: border-box;
+    padding-right: 16px;
+    width: 100%;
+    border-right: 1px solid #444;
 
 }
