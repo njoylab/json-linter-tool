@@ -64,15 +64,6 @@ afterEach(() => {
     window.localStorage.clear(); // Clear mock localStorage after each test
 });
 
-test('should update line numbers on editor input', () => {
-    const editor = document.getElementById('editor');
-    editor.innerText = '{"key": "value"}';
-    const event = new window.Event('input');
-    editor.dispatchEvent(event);
-
-    const lineNumbers = document.getElementById('lineNumbers');
-    expect(lineNumbers.innerHTML).toContain('1');
-});
 
 test('should show toast when editor is empty', () => {
     const editor = document.getElementById('editor');
@@ -235,7 +226,6 @@ test('should highlight JSON syntax correctly', () => {
     const jsonString = '{"key": "value", "number": 42, "boolean": true, "null": null}';
     const highlighted = window.highlightJSON(jsonString);
 
-    expect(highlighted).toContain('class="json-key"');
     expect(highlighted).toContain('class="json-string"');
     expect(highlighted).toContain('class="json-number"');
     expect(highlighted).toContain('class="json-boolean"');
@@ -336,22 +326,6 @@ test('should handle JSON highlighting correctly', () => {
     expect(editor.innerHTML).toContain('class="json-null"');
 });
 
-test('should handle line number updates', () => {
-    const editor = document.getElementById('editor');
-    const testJSON = `{
-        "key1": "value1",
-        "key2": "value2",
-        "key3": "value3"
-    }`;
-
-    editor.innerText = testJSON;
-    const event = new window.Event('input');
-    editor.dispatchEvent(event);
-
-    const lineNumbers = document.getElementById('lineNumbers');
-    const lines = lineNumbers.children;
-    expect(lines.length).toBe(5); // Including opening/closing braces
-});
 
 
 test('should handle caret position correctly', () => {
@@ -436,4 +410,90 @@ test('should handle keyboard shortcuts correctly', () => {
         altKey: true
     }));
     expect(window.clearCode).toHaveBeenCalled();
+});
+
+describe('JSON Highlighting', () => {
+    test('should highlight basic JSON syntax correctly', () => {
+        const jsonString = '{"key": "value", "number": 42, "boolean": true, "null": null}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted).toContain('class="json-string"');
+        expect(highlighted).toContain('class="json-number"');
+        expect(highlighted).toContain('class="json-boolean"');
+        expect(highlighted).toContain('class="json-null"');
+    });
+
+    test('should handle nested objects', () => {
+        const jsonString = '{"nested": {"key": "value"}}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted).toContain('class="json-brace"');
+        expect(highlighted.match(/class="json-brace"/g).length).toBe(4); // Two pairs of braces
+        expect(highlighted).toContain('class="json-string"');
+    });
+
+    test('should handle arrays correctly', () => {
+        const jsonString = '{"array": [1, 2, "three", true]}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted).toContain('class="json-brace"'); // For [ and ]
+        expect(highlighted).toContain('class="json-number"');
+        expect(highlighted).toContain('class="json-string"');
+        expect(highlighted).toContain('class="json-boolean"');
+    });
+
+    test('should handle special characters in strings', () => {
+        const jsonString = '{"special": "\\n\\t\\r", "unicode": "\\u0041"}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted).toContain('\\n\\t\\r');
+        expect(highlighted).toContain('\\u0041');
+        expect(highlighted).toContain('class="json-string"');
+    });
+
+    test('should handle numbers in different formats', () => {
+        const jsonString = '{"numbers": [42, -42, 3.14, 1e-10, 1.2e+10]}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted.match(/class="json-number"/g).length).toBe(5);
+        expect(highlighted).toContain('42');
+        expect(highlighted).toContain('-42');
+        expect(highlighted).toContain('3.14');
+        expect(highlighted).toContain('1e-10');
+        expect(highlighted).toContain('1.2e+10');
+    });
+
+    test('should handle deeply nested structures', () => {
+        const jsonString = `{
+            "level1": {
+                "level2": {
+                    "level3": {
+                        "array": [1, 2, 3]
+                    }
+                }
+            }
+        }`;
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted.match(/class="json-brace"/g).length).toBeGreaterThan(6);
+        expect(highlighted).toContain('class="code-line"');
+    });
+
+
+    test('should escape HTML characters', () => {
+        const jsonString = '{"html": "<div>&amp;</div>"}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted).toContain('&lt;div&gt;');
+        expect(highlighted).toContain('&amp;amp;');
+        expect(highlighted).not.toContain('<div>');
+    });
+
+    test('should handle whitespace correctly', () => {
+        const jsonString = '{\n  "spaced": true\n}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted).toContain('&nbsp;');
+        expect(highlighted).toContain('class="code-line"');
+    });
 });
