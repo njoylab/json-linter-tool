@@ -416,13 +416,34 @@ footer {
     }
 
     .right-nav {
-        width: 100vw;
+        width: 90vw;
         /* Make right-nav fullscreen */
         height: 100vh;
         top: 0;
         right: 0;
         position: fixed;
-        z-index: 1000;
+        z-index: 2000;
+        display: none;
         /* Ensure it is on top */
     }
+
+    .right-nav.open {
+        display: block;
+        top: 0;
+        right: 0;
+        left: 0;
+        bottom: 0;
+    }
+
+    .right-nav .button-container {
+        position: absolute;
+        bottom: 30px;
+    }
+
+    #fileList {
+        margin-top: 50px;
+        margin-bottom: 20px;
+    }
+
+
 }

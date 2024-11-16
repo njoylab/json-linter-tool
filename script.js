@@ -2,6 +2,9 @@ const editor = document.getElementById('editor');
 const lineNumbers = document.getElementById('lineNumbers');
 let charCount = 0;
 
+function isMobile() {
+    return window.innerWidth <= 768;
+}
 
 function handleEditorInput(event) {
     const lastCharInput = event.data;
@@ -463,6 +466,9 @@ function loadFromLocal(fileName) {
     }
     lintCode();
     updateLineNumbers();
+    if (isMobile()) {
+        toggleRightNav();
+    }
 }
 
 function deleteFile(fileName) {
