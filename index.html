@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Linter, Formatter, and Fixer</title>
+    <title>JSON Linter, Formatter and Fixer</title>
     <meta name="description"
         content="Use this tool to lint, format, fix, minify, and prettify JSON data in your browser.">
     <meta name="keywords" content="JSON, linter, formatter, fixer, validator, minifier, prettifier">
@@ -14,235 +14,45 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <style>
-        /* Global Styles with Font */
-        body {
-            background-color: #ffffff;
-            color: #000000;
-            font-family: Verdana, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            position: relative;
-            display: flex;
-            width: 80vw;
-        }
-
-        .line-numbers {
-            font-size: 11px;
-            line-height: 19px;
-            background-color: #f0f0f0;
-            color: #888;
-            text-align: right;
-            user-select: none;
-            font-family: monospace;
-            overflow-y: hidden;
-            padding: 10px;
-            margin-bottom: 1em;
-        }
-
-        /* Textarea with Resizable Option */
-        #jsonInput {
-            width: 80vw;
-            height: 60vh;
-            font-size: 16px;
-            background-color: #f9f9f9;
-            color: #000000;
-            border: 1px solid #cccccc;
-            padding: 10px;
-            box-sizing: border-box;
-            margin-bottom: 1em;
-            resize: vertical;
-            font-family: Verdana, Arial, sans-serif;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 1em;
-        }
-
-        button,
-        label {
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-            font-family: Verdana, Arial, sans-serif;
-        }
-
-        label {
-            background-color: transparent;
-            color: #000;
-        }
-
-        #fixButton {
-            display: none;
-            /* Hidden until needed */
-        }
-
-        /* Dark mode styles */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #121212;
-                color: #ffffff;
-            }
-
-            #jsonInput {
-                background-color: #1e1e1e;
-                color: #ffffff;
-                border: 1px solid #333333;
-            }
-
-            .line-numbers {
-                background-color: #2e2e2e;
-                color: #ffffff;
-            }
-
-            button,
-            label {
-                background-color: #4a90e2;
-                color: #ffffff;
-            }
-        }
-
-        /* Footer styling */
-        footer {
-            margin-top: 2em;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        h1 {
-            text-align: center;
-        }
-
-        h2 {
-            text-align: center;
-        }
-
-        .top-right-buttons {
-            position: absolute;
-            right: 10px;
-            top: 10px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .top-right-buttons button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-
-        .top-right-buttons button:hover {
-            background-color: #e0e0e0;
-        }
-
-        .top-right-buttons button svg {
-            stroke: #007bff;
-        }
-
-        .top-right-buttons button:hover svg {
-            stroke: #0056b3;
-        }
-
-        /* Toast styles */
-        .toast {
-            visibility: hidden;
-            min-width: 200px;
-            margin-left: -100px;
-            background-color: #0056b3;
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 10px;
-            position: fixed;
-            z-index: 1000;
-            left: 50%;
-            bottom: 30px;
-            font-size: 16px;
-            opacity: 0;
-            transition: opacity 0.5s, bottom 0.5s;
-        }
-
-        .toast.show {
-            visibility: visible;
-            opacity: 1;
-            bottom: 50px;
-        }
-    </style>
-
+    <link rel="stylesheet" href="styles.css">
     <script src="jsonrepair.min.js"></script>
 </head>
 
 <body>
-    <header>
-        <h1>JSON Linter, Formatter, and Fixer Tool</h1>
-    </header>
-
-    <!-- Container for line numbers and textarea -->
-    <div class="container">
-        <div class="line-numbers" id="lineNumbers">1</div>
-        <textarea id="jsonInput" placeholder="Enter JSON here"></textarea>
-        <div class="top-right-buttons">
-            <!-- Fix JSON Button with Icon -->
-            <button id="fixButton" title="Fix JSON">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 11H5M12 2L2 12l10 10 10-10-10-10z"></path>
-                </svg>
-            </button>
-            <!-- Copy to Clipboard Button with Icon -->
-            <button id="copyButton" title="Copy to Clipboard">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </button>
+    <div class="editor-container">
+        <div class="line-numbers" id="lineNumbers"></div>
+        <div class="editable-div" contenteditable="true" id="editor" spellcheck="false"></div>
+        <button class="copy-button" onclick="copyContent()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path
+                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+            </svg>
+        </button>
+    </div>
+    <div class="right-nav" id="rightNav">
+        <button class="close-button-side" onclick="toggleRightNav()">X</button>
+        <ul id="fileList"></ul>
+        <div class="button-container">
+            <button onclick="downloadJSON()" id="downloadJson">⬇️ Download</button>
+            <button onclick="saveToLocal()" id="saveToLocalStorage">💾 Local</button>
         </div>
     </div>
+    <div id="toast" class="toast"></div>
 
-    <div class="button-row">
-        <button id="lintButton">Lint JSON</button>
-        <button id="minifyButton">Minify JSON</button>
-        <label>
-            <input type="checkbox" id="realtimeCheckbox"> Real-time Linting
-        </label>
+    <div class="floating-buttons">
+        <button onclick="lintCode()">Lint <span class="shortcut">^⌥ l</span></button>
+        <button onclick="minifyCode()">Minify <span class="shortcut">^⌥ m</span></button>
+        <button onclick="clearCode()">Clear <span class="shortcut">^⌥ ⌫</span></button>
+        <button onclick="toggleRightNav()">Save/Load <span class="shortcut">^⌥ o</span></button>
+        <button onclick="toggleFullScreen()">?</button>
     </div>
-
-    <p id="resultMessage" style="font-weight: bold;"></p>
-
+    <script defer src="script.js"></script>
     <section>
+        <button class="close-button" onclick="toggleFullScreen()">Close</button>
         <h3>What is JSON?</h3>
         <p>JSON (JavaScript Object Notation) is a lightweight data-interchange format that's easy for humans to read and
             write. It's commonly used for transmitting data in web applications, allowing client-side and server-side
-            applications to communicate efficiently.</p>
+            applications to communicate efficiently. <a href="#" onclick="loadExample()">Load an example</a></p>
 
         <h3>Features of This JSON Linter Tool</h3>
         <p>This JSON tool provides multiple features to help you work with JSON data easily:</p>
@@ -254,16 +64,14 @@
                 forgiving for common mistakes.</li>
             <li><strong>Minify:</strong> Compresses JSON by removing whitespace, making it easier to transmit or store.
             </li>
-            <li><strong>Real-Time Linting:</strong> Instantly checks JSON validity as you type, providing immediate
-                feedback.</li>
             <li><strong>Copy to Clipboard:</strong> Quickly copy formatted JSON to use in other applications or share
                 with others.</li>
+            <li><strong>Save/Load:</strong> Save and load your JSON data to the browser's local storage.</li>
         </ul>
 
         <h3>How to Use the JSON Linter Tool</h3>
         <p>Simply paste your JSON data into the text area and use the buttons to lint, fix, format, or minify your JSON.
-            You can enable real-time linting for instant feedback as you type. The tool provides detailed error messages
-            for invalid JSON, making it easier to locate and fix issues.</p>
+        </p>
 
         <h3>Benefits of JSON Linting and Formatting</h3>
         <p>Proper JSON formatting is essential for readability and collaboration. Linting helps ensure that JSON data is
@@ -282,143 +90,24 @@
         <p>No, all JSON processing occurs directly in your browser.
             Your JSON data stays on the client side and is not sent to any server. This tool is entirely browser-based
             for your privacy and security.</p>
+        <p>- <strong>What are the keyboard shortcuts?</strong></p>
+        <p>Use the following shortcuts for quick actions:</p>
+        <ul>
+            <li><strong>Lint:</strong> Ctrl + Alt + L</li>
+            <li><strong>Minify:</strong> Ctrl + Alt + M</li>
+            <li><strong>Clear:</strong> Ctrl + Alt + Del</li>
+            <li><strong>Help:</strong> Ctrl + Alt + H</li>
+            <li><strong>Copy:</strong> Ctrl + Alt + C</li>
+            <li><strong>Download:</strong> Ctrl + Alt + D</li>
+            <li><strong>Save:</strong> Ctrl + Alt + S</li>
+            <li><strong>Load:</strong> Ctrl + Alt + O</li>
+        </ul>
     </section>
 
     <footer>
         <p>Made by <a href="https://www.njoylab.com" target="_blank">nJoylab.com</a> | <a
                 href="https://github.com/njoylab/json-linter-tool" target="_blank">View source on GitHub</a></p>
     </footer>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">Copied to clipboard!</div>
-    <script>
-        function lintJson() {
-            const jsonInput = document.getElementById('jsonInput');
-            const resultMessage = document.getElementById('resultMessage');
-            const fixButton = document.getElementById('fixButton');
-
-            try {
-                const parsedData = JSON.parse(jsonInput.value);
-                jsonInput.value = JSON.stringify(parsedData, null, 2); // Pretty-print JSON
-                jsonInput.style.borderColor = 'green';
-                resultMessage.textContent = "Valid JSON!";
-                resultMessage.style.color = 'green';
-                fixButton.style.display = 'none'; // Hide fix button if JSON is valid
-            } catch (error) {
-                jsonInput.style.borderColor = 'red';
-                const position = error.message.match(/position (\d+)/);
-                if (position) {
-                    const charIndex = parseInt(position[1]);
-                    const lines = jsonInput.value.substr(0, charIndex).split('\n');
-                    const line = lines.length;
-                    const column = lines[lines.length - 1].length + 1;
-                    resultMessage.textContent = `Invalid JSON at line ${line}, column ${column}: ${error.message}`;
-                } else {
-                    resultMessage.textContent = `Invalid JSON: ${error.message}`;
-                }
-                resultMessage.style.color = 'red';
-                fixButton.style.display = 'inline'; // Show fix button if JSON is invalid
-            }
-            updateLineNumbers();
-        }
-
-        document.getElementById('lintButton').addEventListener('click', lintJson);
-
-        // Toggle real-time linting based on checkbox
-        document.getElementById('realtimeCheckbox').addEventListener('change', (event) => {
-            const jsonInput = document.getElementById('jsonInput');
-            if (event.target.checked) {
-                jsonInput.addEventListener('input', lintJson);
-            } else {
-                jsonInput.removeEventListener('input', lintJson);
-            }
-        });
-
-        // Fix JSON using JSONRepair
-        document.getElementById('fixButton').addEventListener('click', () => {
-            const jsonInput = document.getElementById('jsonInput');
-            const resultMessage = document.getElementById('resultMessage');
-
-            try {
-                const { jsonrepair } = JSONRepair
-                const parsedData = jsonrepair(jsonInput.value); // Try to parse with JSONRepair
-                const j = JSON.parse(parsedData);
-                jsonInput.value = JSON.stringify(j, null, 2); // Pretty-print fixed JSON back to textarea
-                resultMessage.textContent = "Fixed JSON!";
-                resultMessage.style.color = 'orange';
-                jsonInput.style.borderColor = 'green';
-                updateLineNumbers();
-            } catch (error) {
-                resultMessage.textContent = "Could not fix JSON: " + error.message;
-                resultMessage.style.color = 'red';
-            }
-        });
-
-        // Minify JSON
-        document.getElementById('minifyButton').addEventListener('click', () => {
-            try {
-                const parsedData = JSON.parse(document.getElementById('jsonInput').value);
-                document.getElementById('jsonInput').value = JSON.stringify(parsedData);
-            } catch (error) {
-                alert("Please enter valid JSON to minify.");
-            }
-        });
-
-        // Copy JSON to Clipboard
-        document.getElementById('copyButton').addEventListener('click', () => {
-            const jsonInput = document.getElementById('jsonInput');
-            jsonInput.select();
-            document.execCommand('copy');
-            // Show the toast message
-            showToast("Copied to clipboard!");
-        });
-
-        // Function to show toast notification
-        function showToast(message) {
-            toast.textContent = message;
-            toast.classList.add('show');
-
-            // Hide the toast after 3 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Line numbers
-        const jsonInput = document.getElementById('jsonInput');
-        const lineNumbers = document.getElementById('lineNumbers');
-        updateLineNumberHeight();
-
-        function updateLineNumberHeight() {
-            const bottomPadding = 18;
-            lineNumbers.style.height = jsonInput.clientHeight - bottomPadding + 'px';
-        }
-
-        // Function to update line numbers
-        function updateLineNumbers() {
-            if (jsonInput.value === '') {
-                lineNumbers.innerHTML = '';
-                return;
-            }
-            const lines = jsonInput.value.split('\n').length;
-            lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
-        }
-
-
-        // Event listeners to update line numbers on input, scroll, and resize
-        jsonInput.addEventListener('input', updateLineNumbers);
-        jsonInput.addEventListener('scroll', () => {
-            lineNumbers.scrollTop = jsonInput.scrollTop;
-        });
-        jsonInput.addEventListener('keyup', updateLineNumbers);
-
-        // Event listener to update line numbers on resize
-        new ResizeObserver(outputsize => {
-            updateLineNumberHeight();
-        }).observe(jsonInput);
-        // Initialize line numbers on page load
-        updateLineNumbers();
-    </script>
 </body>
 
 </html>
