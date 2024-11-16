@@ -7,9 +7,21 @@ A lightweight, browser-based tool to lint, format, fix, minify, and prettify JSO
 
 - **JSON Linting**: Validate JSON syntax and highlight errors, showing the exact line and character of the issue.
 - **Fix JSON**: Automatically corrects common JSON syntax errors using [JSONRepair](https://github.com/njoylab/jsonrepair), making it more forgiving for common mistakes.
+- **Syntax Highlighting**: Colorful code highlighting for better readability and error detection.
+- **Local Storage**: Save and retrieve your JSON data automatically between sessions.
 - **Minify JSON**: Compress JSON by removing whitespace, making it easier to transmit or store.
-- **Real-Time Linting**: Instantly checks JSON validity as you type, providing immediate feedback.
 - **Copy to Clipboard**: Quickly copy formatted JSON to use in other applications or share with others.
+
+## Keyboard Shortcuts
+
+- `Ctrl+Alt+L`: Lint JSON
+- `Ctrl+Alt+M`: Minify JSON
+- `Ctrl+Alt+Backspace`: Clear JSON
+- `Ctrl+Alt+C`: Copy JSON to Clipboard
+- `Ctrl+Alt+S`: Save JSON to Local Storage
+- `Ctrl+Alt+D`: Download JSON
+- `Ctrl+Alt+O`: Toggle Right Navigation Panel for Loading/Saving JSON files
+- `Ctrl+Alt+H`: Toggle Help Screen
 
 ## Demo
 
@@ -43,7 +55,30 @@ To run this project locally, you only need a web browser.
    - **Fix**: Correct common syntax errors.
    - **Minify**: Remove whitespace for a compact JSON.
    - **Copy to Clipboard**: Copy JSON data for easy sharing.
-3. Toggle **Real-Time Linting** if you’d like to validate JSON as you type.
+
+Your JSON data is automatically saved to local storage and will be restored when you return to the tool.
+
+### Running Tests
+
+1. Install test dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Run the test suite:
+   ```bash
+   npm test
+   ```
+
+3. For development with watch mode:
+   ```bash
+   npm run test:watch
+   ```
+
+The test suite includes:
+- Unit tests for JSON parsing and formatting
+- Integration tests for the UI components
+- Local storage functionality tests
 
 ## Contributing
 

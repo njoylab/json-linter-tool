@@ -2,10 +2,18 @@ const editor = document.getElementById('editor');
 const lineNumbers = document.getElementById('lineNumbers');
 let charCount = 0;
 
+/**
+ * Checks if the current device is a mobile device based on window width
+ * @returns {boolean} True if the device is mobile, false otherwise
+ */
 function isMobile() {
     return window.innerWidth <= 768;
 }
 
+/**
+ * Handles input events in the editor, including syntax highlighting and cursor position
+ * @param {InputEvent} event - The input event object
+ */
 function handleEditorInput(event) {
     const lastCharInput = event.data;
     debounce(() => {
@@ -30,6 +38,10 @@ function handleEditorInput(event) {
     updateLineNumbers();
 }
 
+/**
+ * Handles paste events, formatting JSON if valid
+ * @param {ClipboardEvent} e - The clipboard event object
+ */
 function handlePaste(e) {
     e.preventDefault();
     let text = (e.clipboardData || window.clipboardData).getData('text/plain');
@@ -51,6 +63,10 @@ function handlePaste(e) {
     updateLineNumbers();
 }
 
+/**
+ * Handles clicks on line numbers to toggle code folding
+ * @param {MouseEvent} e - The click event object
+ */
 function handleLineNumberClick(e) {
     const lineNumber = e.target.dataset.line;
     if (lineNumber !== undefined) {
@@ -58,6 +74,12 @@ function handleLineNumberClick(e) {
     }
 }
 
+/**
+ * Creates a debounced version of a function
+ * @param {Function} func - The function to debounce
+ * @param {number} wait - The debounce delay in milliseconds
+ * @returns {Function} The debounced function
+ */
 function debounce(func, wait) {
     let timeout;
     return function () {
@@ -66,6 +88,11 @@ function debounce(func, wait) {
     };
 }
 
+/**
+ * Updates the line numbers in the editor gutter
+ * Adds collapsible line indicators for objects and arrays
+ * @returns {void} 
+ */
 function updateLineNumbers() {
     const content = editor.innerText;
     const lines = content.split('\n');
@@ -77,6 +104,11 @@ function updateLineNumbers() {
     }).join('');
 }
 
+/**
+ * Displays a toast message to the user
+ * @param {string} message - The message to display
+ * @param {('success'|'error')} [type='success'] - The type of toast message
+ */
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -86,6 +118,10 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
+/**
+ * Checks if the editor is empty
+ * @returns {boolean} True if editor is empty, false otherwise
+ */
 function isEditorEmpty() {
     if (editor.innerText.trim() === '') {
         showToast('Editor is empty', 'error');
@@ -94,6 +130,10 @@ function isEditorEmpty() {
     return false;
 }
 
+/**
+ * Formats and validates JSON content in the editor
+ * @throws {Error} If JSON is invalid
+ */
 function lintCode() {
     if (isEditorEmpty()) {
         return;
@@ -112,6 +152,10 @@ function lintCode() {
     updateLineNumbers();
 }
 
+/**
+ * Attempts to repair invalid JSON using JSONRepair library
+ * @throws {Error} If JSON cannot be repaired
+ */
 function fixCode() {
     try {
         const { jsonrepair } = JSONRepair;
@@ -123,6 +167,10 @@ function fixCode() {
 }
 
 
+/**
+ * Minifies JSON content in the editor
+ * @throws {Error} If JSON is invalid
+ */
 function minifyCode() {
     if (isEditorEmpty()) {
         return;
@@ -138,6 +186,10 @@ function minifyCode() {
     updateLineNumbers();
 }
 
+/**
+ * Handles JSON parsing errors with detailed position information
+ * @param {Error} error - The JSON parsing error
+ */
 function handleJSONError(error) {
     const position = error.message.match(/position (\d+)/);
     let resultMessage;
@@ -153,12 +205,21 @@ function handleJSONError(error) {
     showToast(resultMessage, 'error');
 }
 
+/**
+ * Clears all content from the editor and updates line numbers
+ * @returns {void}
+ */
 function clearCode() {
     editor.innerText = '';
     updateLineNumbers();
 }
 
 
+/**
+ * Applies syntax highlighting to JSON text
+ * @param {string} text - The JSON text to highlight
+ * @returns {string} HTML string with syntax highlighting
+ */
 function highlightJSON(text) {
     text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     return text.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
@@ -179,6 +240,11 @@ function highlightJSON(text) {
     });
 }
 
+/**
+ * Copies the editor content to clipboard and shows a confirmation
+ * @returns {Promise<void>} A promise that resolves when the copy is complete
+ * @throws {Error} If clipboard access fails
+ */
 async function copyContent() {
     try {
         const content = editor.innerText;
@@ -197,6 +263,10 @@ async function copyContent() {
     }
 }
 
+/**
+ * Toggles code block collapse state
+ * @param {number} lineNumber - The line number to toggle
+ */
 function toggleCollapse(lineNumber) {
     const codeLineElements = editor.childNodes;
     const lineElement = codeLineElements[lineNumber];
@@ -227,11 +297,21 @@ function toggleCollapse(lineNumber) {
         if (placeholder) placeholder.remove();
     }
 }
-
+/**
+ * Checks if a line contains an opening brace/bracket for an object/array
+ * @param {string} line - The line of code to check
+ * @returns {boolean} True if line ends with { or [, false otherwise
+ */
 function isObjectOrArrayLine(line) {
     return /[{\[][ ]*$/.test(line.trim());
 }
 
+/**
+ * Finds the matching closing brace/bracket for an opening one
+ * @param {NodeList} lines - The lines of code to search through
+ * @param {number} startLine - The line number containing the opening brace
+ * @returns {number} The line number of the matching closing brace, or -1 if not found
+ */
 function findMatchingBrace(lines, startLine) {
     const startChar = lines[startLine].trim().slice(-1);
     const endChar = startChar === '{' ? '}' : ']';
@@ -248,10 +328,19 @@ function findMatchingBrace(lines, startLine) {
     return -1;
 }
 
+/**
+ * Saves current cursor position in the editor
+ * @returns {number} The current caret position
+ */
 function saveCursorPosition() {
     return CaretUtil.getCaretPosition(editor);
 }
 
+/**
+ * Restores cursor position in the editor
+ * @param {number} saved - The position to restore to
+ * @returns {boolean} Always returns false
+ */
 function restoreCursorPosition(saved) {
     if (saved && editor) {
         CaretUtil.setCaretPosition(editor, saved)
@@ -259,6 +348,11 @@ function restoreCursorPosition(saved) {
     return false;
 }
 
+/**
+ * Synchronizes scrolling between the line numbers and editor
+ * Makes the line numbers scroll in sync with the editor content
+ * @returns {void}
+ */
 function syncScroll() {
     lineNumbers.scrollTop = editor.scrollTop;
 }
@@ -326,6 +420,13 @@ CaretUtil.isDescendantOf = function (node, parent) {
     return false;
 };
 
+/**
+ * Creates a range for setting caret position in contentEditable elements
+ * @param {Node} node - The DOM node to create range in
+ * @param {Object} chars - Object containing count of characters to set range end
+ * @param {Range} [range] - Optional existing range to modify
+ * @returns {Range} The created or modified range
+ */
 CaretUtil.createRange = function (node, chars, range) {
     if (range == null) {
         range = window.document.createRange();
@@ -357,6 +458,10 @@ CaretUtil.createRange = function (node, chars, range) {
     return range;
 };
 
+/**
+ * Toggles full screen mode for the main section
+ * Shows/hides close button based on full screen state
+ */
 function toggleFullScreen() {
     const section = document.querySelector('section');
     section.classList.toggle('full-screen');
@@ -364,6 +469,10 @@ function toggleFullScreen() {
     closeButton.style.display = section.classList.contains('full-screen') ? 'block' : 'none';
 }
 
+/**
+ * Loads example JSON data into the editor
+ * Formats and updates line numbers after loading
+ */
 function loadExample() {
     const exampleJSON = `{
         "name": "John Doe",
@@ -381,28 +490,52 @@ function loadExample() {
     toggleFullScreen();
 }
 
+/**
+ * Toggles the visibility of the right navigation panel
+ */
 function toggleRightNav() {
     const rightNav = document.getElementById('rightNav');
     rightNav.classList.toggle('open');
 }
 
+/**
+ * Closes the right navigation panel
+ */
 function closeNav() {
     const rightNav = document.getElementById('rightNav');
     rightNav.classList.remove('open');
 }
 
+/**
+ * Gets the storage key name for a file
+ * @param {string} fileName - Name of the file
+ * @returns {string} Storage key with prefix
+ */
 function getKeyName(fileName) {
     return "lnt_" + fileName;
 }
 
+/**
+ * Gets the original file name from a storage key
+ * @param {string} keyName - Storage key name
+ * @returns {string} Original file name without prefix
+ */
 function getFileName(keyName) {
     return keyName.replace("lnt_", "");
 }
 
+/**
+ * Gets list of all JSON files saved in local storage
+ * @returns {string[]} Array of storage keys for JSON files
+ */
 function getFileList() {
     return Object.keys(localStorage).filter(key => key.startsWith("lnt_"));
 }
 
+/**
+ * Saves JSON content to local storage
+ * @returns {void}
+ */
 function saveToLocal() {
     if (isEditorEmpty()) {
         return;
@@ -420,6 +553,12 @@ function saveToLocal() {
     }
 }
 
+/**
+ * Updates the file list in the right navigation panel
+ * Displays either a help message if no files exist, or a list of saved files
+ * with options to load, delete and rename them
+ * @returns {void}
+ */
 function updateFileList() {
     const fileList = document.getElementById('fileList');
     fileList.innerHTML = ''; // Clear existing list
@@ -457,6 +596,10 @@ function updateFileList() {
     }
 }
 
+/**
+ * Loads JSON content from local storage
+ * @param {string} fileName - The name of the file to load
+ */
 function loadFromLocal(fileName) {
     const fileData = JSON.parse(localStorage.getItem(fileName));
     if (fileData) {
@@ -471,6 +614,10 @@ function loadFromLocal(fileName) {
     }
 }
 
+/**
+ * Deletes a saved JSON file from local storage
+ * @param {string} fileName - The name of the file to delete
+ */
 function deleteFile(fileName) {
     if (confirm(`Are you sure you want to delete ${getFileName(fileName)}?`)) {
         localStorage.removeItem(fileName);
@@ -478,6 +625,10 @@ function deleteFile(fileName) {
     }
 }
 
+/**
+ * Renames a saved JSON file in local storage
+ * @param {string} oldName - The current name of the file to rename
+ */
 function renameFile(oldName) {
     const newName = prompt('Enter the new name for the file:', getFileName(oldName));
     if (newName && newName !== getFileName(oldName)) {
@@ -488,6 +639,9 @@ function renameFile(oldName) {
     }
 }
 
+/**
+ * Downloads the current JSON content as a file
+ */
 function downloadJSON() {
     if (isEditorEmpty()) {
         return;
