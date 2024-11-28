@@ -828,6 +828,22 @@ lineNumbers.addEventListener('click', function (e) {
     }
 });
 document.addEventListener('keydown', function (event) {
+    if (event.key === 'Tab') {
+        event.preventDefault(); // Prevent focusing out of the editor
+
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const tabNode = document.createTextNode('\t'); // Two spaces for a tab
+
+        range.deleteContents();
+        range.insertNode(tabNode);
+
+        // Move cursor after the inserted tab
+        range.setStartAfter(tabNode);
+        range.setEndAfter(tabNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
     if (event.ctrlKey && event.altKey) {
         switch (event.key.toLowerCase()) {
             case 'l':
