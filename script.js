@@ -20,10 +20,10 @@ function getEditorContent() {
  */
 function handleEditorInput(event) {
     const lastCharInput = event.data;
-    if (!lastCharInput) {
+    // whitelabel some characters that are not important to highlight (like spaces and tabs)
+    if (!lastCharInput || lastCharInput.match(/[ \t]/)) {
         updateLineNumbers();
         return;
-
     }
     //  debounce(() => {
 
@@ -48,22 +48,56 @@ function handleEditorInput(event) {
 function handlePaste(e) {
     e.preventDefault();
     let text = (e.clipboardData || window.clipboardData).getData('text/plain');
+
+    // Sanitize the pasted text
+    text = sanitizePastedText(text);
+
     try {
         const parsed = JSON.parse(text);
-        text = JSON.stringify(parsed, null, 2);
-    } catch (e) { }
+        text = JSON.stringify(parsed, null, 2); // Format with 2 spaces
+    } catch (e) {
+        // If parsing fails, keep the sanitized text as-is
+    }
+
     const highlighted = highlightJSON(text);
 
     // Use Range and Selection APIs to insert HTML
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
-    selection.deleteFromDocument(); // Remove current selection
+    selection.deleteFromDocument();
     const range = selection.getRangeAt(0);
     const fragment = range.createContextualFragment(highlighted);
     range.insertNode(fragment);
 
-
     updateLineNumbers();
+}
+
+/**
+ * Sanitizes pasted text by normalizing whitespace
+ * @param {string} text - The text to sanitize
+ * @returns {string} Sanitized text
+ */
+function sanitizePastedText(text) {
+    return text
+        // Replace tabs with spaces
+        .replace(/\t/g, '  ')
+        // Replace multiple spaces with two spaces
+        .replace(/ {3,}/g, '  ')
+        // Replace multiple newlines with single newlines
+        .replace(/\n{3,}/g, '\n\n')
+        // Remove spaces at the end of lines
+        .replace(/[ \t]+$/gm, '')
+        // Remove spaces before commas
+        .replace(/\s+,/g, ',')
+        // Ensure single space after commas
+        .replace(/,(\S)/g, ', $1')
+        // Remove spaces inside empty brackets/braces
+        .replace(/\{\s+\}/g, '{}')
+        .replace(/\[\s+\]/g, '[]')
+        // Remove spaces around colons (but keep one space after)
+        .replace(/\s*:\s*/g, ': ')
+        // Trim leading/trailing whitespace
+        .trim();
 }
 
 /**
@@ -241,42 +275,41 @@ function clearCode() {
  * @returns {string} HTML string with syntax highlighting
  */
 function highlightJSON(text) {
+    // Escape HTML characters but preserve spaces
     text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     const lines = text.split('\n');
 
     const highlightedLines = lines.map(line => {
-        // Match key and any following structure
-        const keyMatch = line.match(/^(\s*"[^"]*"\s*:\s*)([\{\[])?(.*)$/);
-        if (keyMatch) {
-            const indent = keyMatch[1].match(/^\s*/)[0];
-            const keyPart = keyMatch[1].trim();
-            const bracePart = keyMatch[2] || '';
-            const restOfLine = keyMatch[3];
+        // Preserve leading whitespace exactly as is
+        const leadingSpaces = line.match(/^(\s*)/)[0];
+        const lineContent = line.slice(leadingSpaces.length);
 
-            const highlightedIndent = indent.replace(/\s/g, '&nbsp;');
-            const highlightedKey = keyPart.replace(/(".*?")(\s*:)/, (match, p1, p2) => {
-                return `<span class="json-key">${p1}</span>${p2}`;
+        // Match key and any following structure
+        const keyMatch = lineContent.match(/^("[^"]*"\s*:\s*)([\{\[])?(.*)$/);
+        if (keyMatch) {
+            const [, keyPart, bracePart = '', restOfLine] = keyMatch;
+
+            const highlightedKey = keyPart.replace(/(".*?")(\s*:)(\s*)/, (match, p1, p2, p3) => {
+                // Preserve spaces after the colon
+                return `<span class="json-key">${p1}</span>${p2}${p3}`;
             });
 
             const highlightedBrace = bracePart ? `<span class="json-brace">${bracePart}</span>` : '';
             const highlightedRest = restOfLine.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^\\"]|[^\\"])*"|[\{\}\[\]]|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|,)/g, match => {
                 return highlightMatch(match);
             });
-            return `<div class="code-line">${highlightedIndent}${highlightedKey}${highlightedBrace}${highlightedRest}</div>`;
+
+            return `<div class="code-line">${leadingSpaces}${highlightedKey}${highlightedBrace}${highlightedRest}</div>`;
         } else {
             // Regular line highlighting
-            const indentMatch = line.match(/^\s*/);
-            const indent = indentMatch ? indentMatch[0] : '';
-            const highlightedIndent = indent.replace(/\s/g, '&nbsp;');
-
-            const restOfLine = line.substring(indent.length);
-            const highlightedLine = restOfLine.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^\\"]|[^\\"])*"|[\{\}\[\]]|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|,)/g, match => {
+            const highlightedLine = lineContent.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^\\"]|[^\\"])*"|[\{\}\[\]]|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|,)/g, match => {
                 return highlightMatch(match);
             });
-            return `<div class="code-line">${highlightedIndent}${highlightedLine}</div>`;
+            return `<div class="code-line">${leadingSpaces}${highlightedLine}</div>`;
         }
     });
+
     return highlightedLines.join('');
 }
 
