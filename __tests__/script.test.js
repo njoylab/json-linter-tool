@@ -109,10 +109,33 @@ test('should show toast when editor is empty', () => {
     expect(toast.className).toContain('error');
 });
 
-test.skip('should handle paste event and format JSON', () => {
+test('should handle paste event and format JSON', () => {
     const editor = document.getElementById('editor');
 
-    // Create a proper paste event with preventDefault
+    // Mock the Selection API since JSDOM doesn't fully support it
+    const mockRange = {
+        createContextualFragment: jest.fn((html) => {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            return div.firstChild;
+        }),
+        insertNode: jest.fn((node) => {
+            editor.appendChild(node);
+        }),
+        deleteContents: jest.fn()
+    };
+
+    const mockSelection = {
+        rangeCount: 1,
+        getRangeAt: jest.fn(() => mockRange),
+        deleteFromDocument: jest.fn(),
+        removeAllRanges: jest.fn(),
+        addRange: jest.fn()
+    };
+
+    window.getSelection = jest.fn(() => mockSelection);
+
+    // Create a proper paste event
     const pasteEvent = new window.Event('paste', { bubbles: true, cancelable: true });
     Object.defineProperty(pasteEvent, 'clipboardData', {
         value: {
@@ -120,18 +143,14 @@ test.skip('should handle paste event and format JSON', () => {
         }
     });
 
-    // We need to prevent the default paste behavior
-    pasteEvent.preventDefault = jest.fn();
-
-    // Ensure the formatJSON function is available
-    window.formatJSON = jest.fn((json) => {
-        return `<span class="json-key">"key"</span>: <span class="json-string">"value"</span>`;
-    });
-
     editor.dispatchEvent(pasteEvent);
 
-    expect(editor.innerHTML).toContain('<span class="json-key">"key"</span>');
-    expect(editor.innerHTML).toContain('<span class="json-string">"value"</span>');
+    // Verify that the paste handler processed the JSON with Prism highlighting
+    expect(mockRange.createContextualFragment).toHaveBeenCalled();
+    const highlightedHTML = mockRange.createContextualFragment.mock.calls[0][0];
+    expect(highlightedHTML).toContain('class="token property"');
+    expect(highlightedHTML).toContain('class="token string"');
+    expect(highlightedHTML).toContain('class="code-line"');
 });
 
 test('should save content to local storage', () => {
@@ -145,14 +164,16 @@ test('should save content to local storage', () => {
     expect(savedData.content).toBe('{"key": "value"}');
 });
 
-test.skip('should handle JSON error and show toast', () => {
+test('should handle JSON error and show toast', () => {
     const editor = document.getElementById('editor');
     editor.innerText = '{"key": "value"'; // Invalid JSON
 
-    // Update: Fix JSONRepair mock to match actual implementation
-    window.jsonrepair = jest.fn().mockImplementation(() => {
-        throw new Error('Invalid JSON');
-    });
+    // Mock JSONRepair to throw an error
+    window.JSONRepair = {
+        jsonrepair: jest.fn().mockImplementation(() => {
+            throw new Error('Invalid JSON: unexpected end of input');
+        })
+    };
 
     window.lintCode();
 
