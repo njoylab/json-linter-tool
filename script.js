@@ -270,68 +270,24 @@ function clearCode() {
 
 
 /**
- * Applies syntax highlighting to JSON text
+ * Applies syntax highlighting to JSON text using Prism.js
  * @param {string} text - The JSON text to highlight
  * @returns {string} HTML string with syntax highlighting
  */
 function highlightJSON(text) {
-    // Escape HTML characters but preserve spaces
-    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Use Prism.js to highlight the JSON
+    const highlighted = Prism.highlight(text, Prism.languages.json, 'json');
 
-    const lines = text.split('\n');
-
-    const highlightedLines = lines.map(line => {
-        // Preserve leading whitespace exactly as is
+    // Split into lines and wrap each line in a div with the code-line class
+    const lines = highlighted.split('\n');
+    const wrappedLines = lines.map(line => {
+        // Preserve leading whitespace
         const leadingSpaces = line.match(/^(\s*)/)[0];
         const lineContent = line.slice(leadingSpaces.length);
-
-        // Match key and any following structure
-        const keyMatch = lineContent.match(/^("[^"]*"\s*:\s*)([\{\[])?(.*)$/);
-        if (keyMatch) {
-            const [, keyPart, bracePart = '', restOfLine] = keyMatch;
-
-            const highlightedKey = keyPart.replace(/(".*?")(\s*:)(\s*)/, (match, p1, p2, p3) => {
-                // Preserve spaces after the colon
-                return `<span class="json-key">${p1}</span>${p2}${p3}`;
-            });
-
-            const highlightedBrace = bracePart ? `<span class="json-brace">${bracePart}</span>` : '';
-            const highlightedRest = restOfLine.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^\\"]|[^\\"])*"|[\{\}\[\]]|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|,)/g, match => {
-                return highlightMatch(match);
-            });
-
-            return `<div class="code-line">${leadingSpaces}${highlightedKey}${highlightedBrace}${highlightedRest}</div>`;
-        } else {
-            // Regular line highlighting
-            const highlightedLine = lineContent.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^\\"]|[^\\"])*"|[\{\}\[\]]|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|,)/g, match => {
-                return highlightMatch(match);
-            });
-            return `<div class="code-line">${leadingSpaces}${highlightedLine}</div>`;
-        }
+        return `<div class="code-line">${leadingSpaces}${lineContent}</div>`;
     });
 
-    return highlightedLines.join('');
-}
-
-/**
- * Highlights a match in the JSON text
- * @param {string} match - The match to highlight
- * @returns {string} HTML string with highlighted match
- */
-function highlightMatch(match) {
-    let cls = 'json-number';
-    if (/^"/.test(match)) {
-        cls = 'json-string';
-    } else if (/true|false/.test(match)) {
-        cls = 'json-boolean';
-    } else if (/null/.test(match)) {
-        cls = 'json-null';
-    } else if (/[\{\}\[\]]/.test(match)) {
-        cls = 'json-brace';
-    } else if (/^,$/.test(match)) {
-        cls = 'json-comma';
-    }
-    return `<span class="${cls}">${match}</span>`;
+    return wrappedLines.join('');
 }
 
 /**
