@@ -153,6 +153,16 @@ test('should handle paste event and format JSON', () => {
     expect(highlightedHTML).toContain('class="code-line"');
 });
 
+test('should preserve URLs when sanitizing pasted text', () => {
+    const textWithUrl = '{"url": "https://www.google.com"}';
+    const sanitized = window.sanitizePastedText(textWithUrl);
+
+    // Verify URL is not broken by adding spaces after colons
+    expect(sanitized).toContain('https://www.google.com');
+    expect(sanitized).not.toContain('https: //');
+    expect(sanitized).toContain('"url": "https://www.google.com"');
+});
+
 test('should save content to local storage', () => {
     const editor = document.getElementById('editor');
     editor.innerText = '{"key": "value"}';
@@ -545,5 +555,37 @@ describe('JSON Highlighting', () => {
         const highlighted = window.highlightJSON(jsonString);
 
         expect(highlighted).toContain('class="code-line"');
+    });
+
+    test('should handle URLs in JSON strings', () => {
+        const jsonString = '{"website": "https://www.google.com", "api": "https://api.example.com/v1/users"}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        // Verify the URL is preserved and highlighted as a string
+        expect(highlighted).toContain('https://www.google.com');
+        expect(highlighted).toContain('https://api.example.com/v1/users');
+        expect(highlighted).toContain('class="token string"');
+    });
+
+    test('should parse and format JSON containing URLs', () => {
+        const editor = document.getElementById('editor');
+        const jsonWithUrl = '{"url": "https://www.google.com", "status": "active"}';
+
+        editor.innerText = jsonWithUrl;
+        window.lintCode();
+
+        const content = window.getEditorContent();
+        expect(content).toContain('https://www.google.com');
+        expect(content).toContain('"url"');
+        expect(content).toContain('"status"');
+    });
+
+    test('should handle complex URLs with query parameters', () => {
+        const jsonString = '{"redirect": "https://example.com/search?q=test&lang=en", "callback": "https://app.com/api?token=abc123"}';
+        const highlighted = window.highlightJSON(jsonString);
+
+        expect(highlighted).toContain('https://example.com/search?q=test&lang=en');
+        expect(highlighted).toContain('https://app.com/api?token=abc123');
+        expect(highlighted).toContain('class="token string"');
     });
 });
