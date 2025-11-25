@@ -94,8 +94,8 @@ function sanitizePastedText(text) {
         // Remove spaces inside empty brackets/braces
         .replace(/\{\s+\}/g, '{}')
         .replace(/\[\s+\]/g, '[]')
-        // Remove spaces around colons (but keep one space after)
-        .replace(/\s*:\s*/g, ': ')
+        // Remove spaces around colons (but keep one space after), except for URLs (://)
+        .replace(/\s*:(?!\/\/)\s*/g, ': ')
         // Trim leading/trailing whitespace
         .trim();
 }
