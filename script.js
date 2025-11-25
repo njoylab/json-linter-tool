@@ -2,6 +2,11 @@ const editor = document.getElementById('editor');
 const lineNumbers = document.getElementById('lineNumbers');
 let charCount = 0;
 
+// Undo history management
+let editorHistory = [];
+let currentHistoryIndex = -1;
+const MAX_HISTORY_SIZE = 50;
+
 /**
  * Checks if the current device is a mobile device based on window width
  * @returns {boolean} True if the device is mobile, false otherwise
@@ -811,6 +816,12 @@ document.addEventListener('keydown', function (event) {
         selection.removeAllRanges();
         selection.addRange(range);
     }
+    // Handle Ctrl+Z (or Cmd+Z on Mac) for undo
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        undoEdit();
+        return;
+    }
     if (event.ctrlKey && event.altKey) {
         switch (event.key.toLowerCase()) {
             case 'l':
@@ -837,10 +848,215 @@ document.addEventListener('keydown', function (event) {
             case 'h':
                 toggleFullScreen();
                 break;
+            case 'q':
+                openJQModal();
+                break;
         }
         // prevent default behavior
         event.preventDefault();
     }
 });
 // Call updateFileList on page load to initialize the file list
-document.addEventListener('DOMContentLoaded', updateFileList);
+document.addEventListener('DOMContentLoaded', () => {
+    updateFileList();
+    // Initialize undo button state
+    updateUndoButton();
+});
+
+// ========================================
+// Undo/Redo Functions
+// ========================================
+
+/**
+ * Save current editor state to history
+ */
+function saveToHistory() {
+    const currentContent = getEditorContent();
+
+    // Don't save if content is the same as current history state
+    if (currentHistoryIndex >= 0 && editorHistory[currentHistoryIndex] === currentContent) {
+        return;
+    }
+
+    // Remove any "future" history if we're not at the end
+    if (currentHistoryIndex < editorHistory.length - 1) {
+        editorHistory = editorHistory.slice(0, currentHistoryIndex + 1);
+    }
+
+    // Add current state to history
+    editorHistory.push(currentContent);
+
+    // Limit history size
+    if (editorHistory.length > MAX_HISTORY_SIZE) {
+        editorHistory.shift();
+    } else {
+        currentHistoryIndex++;
+    }
+
+    updateUndoButton();
+}
+
+/**
+ * Undo to previous state
+ */
+function undoEdit() {
+    if (currentHistoryIndex <= 0) {
+        showToast('Nothing to undo', 'info');
+        return;
+    }
+
+    currentHistoryIndex--;
+    const previousContent = editorHistory[currentHistoryIndex];
+
+    // Restore previous content
+    editor.innerHTML = highlightJSON(previousContent);
+    updateLineNumbers();
+
+    showToast('Undone', 'success');
+    updateUndoButton();
+}
+
+/**
+ * Update undo button state
+ */
+function updateUndoButton() {
+    const undoButton = document.getElementById('undo-button');
+    if (undoButton) {
+        if (currentHistoryIndex > 0) {
+            undoButton.removeAttribute('disabled');
+            undoButton.style.opacity = '1';
+        } else {
+            undoButton.setAttribute('disabled', 'true');
+            undoButton.style.opacity = '0.5';
+        }
+    }
+}
+
+// ========================================
+// jq Filter Functions
+// ========================================
+
+const jqProcessor = new JQLite();
+
+/**
+ * Open the jq filter modal
+ */
+function openJQModal() {
+    const modal = document.getElementById('jq-modal');
+    const input = document.getElementById('jq-query-input');
+    modal.style.display = 'flex';
+    input.value = '';
+    input.focus();
+}
+
+/**
+ * Close the jq filter modal
+ */
+function closeJQModal() {
+    const modal = document.getElementById('jq-modal');
+    modal.style.display = 'none';
+}
+
+/**
+ * Toggle jq help section
+ */
+function toggleJQHelp() {
+    const helpSection = document.getElementById('jq-help');
+    const toggleButton = document.querySelector('.help-toggle');
+    if (helpSection.style.display === 'none') {
+        helpSection.style.display = 'block';
+        toggleButton.textContent = 'Less ▲';
+    } else {
+        helpSection.style.display = 'none';
+        toggleButton.textContent = 'More ▼';
+    }
+}
+
+/**
+ * Insert a jq example into the input field
+ * @param {string} example - The example query to insert
+ */
+function insertJQExample(example) {
+    const input = document.getElementById('jq-query-input');
+    input.value = example;
+    input.focus();
+}
+
+/**
+ * Apply a jq filter to the current editor content
+ */
+function applyJQFilter() {
+    const query = document.getElementById('jq-query-input').value;
+    const currentContent = getEditorContent();
+
+    if (!query.trim()) {
+        showToast('Please enter a jq query', 'error');
+        return;
+    }
+
+    if (!currentContent.trim()) {
+        showToast('Editor is empty', 'error');
+        return;
+    }
+
+    try {
+        // Save current state before applying filter
+        saveToHistory();
+
+        // Apply jq filter
+        const result = jqProcessor.apply(currentContent, query);
+
+        if (result.success) {
+            // Format result as JSON string
+            let outputText;
+            if (typeof result.result === 'string') {
+                outputText = result.result;
+            } else {
+                outputText = JSON.stringify(result.result, null, 2);
+            }
+
+            // Update editor
+            const highlighted = highlightJSON(outputText);
+            editor.innerHTML = highlighted;
+            updateLineNumbers();
+
+            showToast('jq filter applied successfully (Ctrl+Z to undo)', 'success');
+            closeJQModal();
+        } else {
+            showToast(`jq error: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('jq-modal');
+    if (e.target === modal) {
+        closeJQModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('jq-modal');
+        if (modal && modal.style.display === 'flex') {
+            closeJQModal();
+        }
+    }
+});
+
+// Apply filter with Enter key in input field
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('jq-query-input');
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyJQFilter();
+            }
+        });
+    }
+});
