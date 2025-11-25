@@ -589,3 +589,44 @@ describe('JSON Highlighting', () => {
         expect(highlighted).toContain('class="token string"');
     });
 });
+
+describe('isObjectOrArrayLine', () => {
+    test('should identify lines starting with opening brace', () => {
+        expect(window.isObjectOrArrayLine('{')).toBe(true);
+        expect(window.isObjectOrArrayLine('  {')).toBe(true);
+    });
+
+    test('should identify lines starting with opening bracket', () => {
+        expect(window.isObjectOrArrayLine('[')).toBe(true);
+        expect(window.isObjectOrArrayLine('  [')).toBe(true);
+    });
+
+    test('should identify property lines with opening brace', () => {
+        expect(window.isObjectOrArrayLine('"key": {')).toBe(true);
+        expect(window.isObjectOrArrayLine('  "property": {')).toBe(true);
+    });
+
+    test('should identify property lines with opening bracket', () => {
+        expect(window.isObjectOrArrayLine('"items": [')).toBe(true);
+        expect(window.isObjectOrArrayLine('  "list": [')).toBe(true);
+    });
+
+    test('should NOT identify lines with braces/brackets in string values', () => {
+        expect(window.isObjectOrArrayLine('"url": "https://example.com"')).toBe(false);
+        expect(window.isObjectOrArrayLine('"text": "value with { or [ inside"')).toBe(false);
+        expect(window.isObjectOrArrayLine('"seed": "https://rheinmetall-defence.com"')).toBe(false);
+    });
+
+    test('should NOT identify regular property lines', () => {
+        expect(window.isObjectOrArrayLine('"name": "value"')).toBe(false);
+        expect(window.isObjectOrArrayLine('"count": 42')).toBe(false);
+        expect(window.isObjectOrArrayLine('"active": true')).toBe(false);
+    });
+
+    test('should NOT identify closing braces/brackets', () => {
+        expect(window.isObjectOrArrayLine('}')).toBe(false);
+        expect(window.isObjectOrArrayLine(']')).toBe(false);
+        expect(window.isObjectOrArrayLine('},')).toBe(false);
+        expect(window.isObjectOrArrayLine('],')).toBe(false);
+    });
+});
