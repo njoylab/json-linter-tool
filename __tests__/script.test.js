@@ -83,6 +83,18 @@ beforeEach(() => {
         }
     };
 
+    // Mock JQLite
+    window.JQLite = class JQLite {
+        apply(input, query) {
+            try {
+                const data = typeof input === 'string' ? JSON.parse(input) : input;
+                return { success: true, result: data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+    };
+
     // Execute the script in the context of the window
     const scriptEl = document.createElement('script');
     scriptEl.textContent = script;
