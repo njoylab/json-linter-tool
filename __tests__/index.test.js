@@ -38,7 +38,7 @@ describe('index.html', () => {
     test('it should have all required floating buttons', () => {
         const floatingButtons = document.querySelectorAll('.floating-buttons button');
         const buttonTexts = Array.from(floatingButtons).map(btn => btn.textContent.split(' ')[0]);
-        expect(buttonTexts).toEqual(['Lint', 'Minify', 'Clear', 'Save/Load', '?']);
+        expect(buttonTexts).toEqual(['Lint', 'Minify', 'jq', 'Undo', 'Clear', 'Save/Load', '?']);
     });
 
     test('it should have keyboard shortcuts displayed', () => {
