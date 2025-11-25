@@ -54,13 +54,8 @@
                 <a href="https://jqlang.github.io/jq/manual/" target="_blank" rel="noopener">jq docs</a>
             </p>
 
-            <input
-                type="text"
-                id="jq-query-input"
-                placeholder="e.g., .[] | select(.age > 18)"
-                autocomplete="off"
-                spellcheck="false"
-            />
+            <input type="text" id="jq-query-input" placeholder="e.g., .[] | select(.age > 18)" autocomplete="off"
+                spellcheck="false" />
 
             <div class="jq-examples">
                 <span class="example-label">Quick examples:</span>
@@ -108,12 +103,13 @@
         <button onclick="lintCode()">Lint <span class="shortcut">^⌥ l</span></button>
         <button onclick="minifyCode()">Minify <span class="shortcut">^⌥ m</span></button>
         <button onclick="openJQModal()">jq Filter <span class="shortcut">^⌥ q</span></button>
-        <button id="undo-button" onclick="undoEdit()" disabled style="opacity: 0.5;">Undo <span class="shortcut">^Z</span></button>
+        <button id="undo-button" onclick="undoEdit()" disabled style="opacity: 0.5;">Undo <span
+                class="shortcut">^Z</span></button>
         <button onclick="clearCode()">Clear <span class="shortcut">^⌥ ⌫</span></button>
         <button onclick="toggleRightNav()">Save/Load <span class="shortcut">^⌥ o</span></button>
         <button onclick="toggleFullScreen()">?</button>
     </div>
-    <script defer src="script.js?v=4"></script>
+    <script defer src="script.js?v=5"></script>
     <section>
         <button class="close-button" onclick="toggleFullScreen()">Close</button>
         <h3>What is JSON?</h3>
