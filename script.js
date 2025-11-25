@@ -319,7 +319,18 @@ async function copyContent() {
  * @returns {boolean} True if line contains { or [, false otherwise
  */
 function isObjectOrArrayLine(line) {
-    return /[\{\[]/.test(line.trim());
+    // Check if line starts with { or [ (possibly after whitespace and a property name with colon)
+    // Examples that should match:
+    //   {
+    //   [
+    //   "key": {
+    //   "key": [
+    // Examples that should NOT match:
+    //   "value with { or [ inside"
+    //   "regular": "value",
+    const trimmed = line.trim();
+    // Match lines that start with { or [, or have a property followed by { or [
+    return /^[\{\[]/.test(trimmed) || /:\s*[\{\[]/.test(trimmed);
 }
 
 /**
