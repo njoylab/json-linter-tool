@@ -14,19 +14,38 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="stylesheet" href="styles.css?v=2">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="styles.css?v=4">
+    <!-- CodeMirror 5 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css">
+
     <script src="jsonrepair.min.js"></script>
     <script src="jq-lite.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+
+    <!-- CodeMirror 5 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/json-lint.min.js"></script>
+
+    <!-- CodeMirror Fold Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script>
+
+    <!-- CodeMirror Edit Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 </head>
 
 <body>
     <div class="editor-container">
         <div class="scroll-wrapper">
-            <div class="line-numbers" id="lineNumbers">1</div>
-            <div class="editable-div" contenteditable="true" id="editor" spellcheck="false"></div>
+            <!-- CodeMirror will be initialized here -->
+            <div id="editor"></div>
         </div>
         <button class="copy-button" onclick="copyContent()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -120,6 +139,9 @@
         <h3>Features of This JSON Linter Tool</h3>
         <p>This JSON tool provides multiple features to help you work with JSON data easily:</p>
         <ul>
+            <li><strong>Smart Editor:</strong> Enjoy a powerful editing experience with the <strong>Dracula</strong>
+                theme, syntax highlighting, <a href="#" onclick="return false;">code folding</a> (click arrows in
+                gutter), and bracket matching.</li>
             <li><strong>Linting:</strong> Validates JSON syntax and highlights errors, showing the exact line and
                 character of the issue.</li>
             <li><strong>Fix JSON:</strong> Automatically corrects common JSON syntax errors using <a

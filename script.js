@@ -1,11 +1,24 @@
-const editor = document.getElementById('editor');
-const lineNumbers = document.getElementById('lineNumbers');
-let charCount = 0;
 
-// Undo history management
-let editorHistory = [];
-let currentHistoryIndex = -1;
-const MAX_HISTORY_SIZE = 50;
+// Initialize CodeMirror through the global object
+const editor = CodeMirror(document.getElementById('editor'), {
+    mode: "application/json",
+    theme: "dracula",
+    lineNumbers: true,
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter", "CodeMirror-lint-markers"],
+    inputStyle: "contenteditable",
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    viewportMargin: Infinity,
+    lint: true,
+    tabSize: 2,
+    indentWithTabs: false
+});
+
+// Update undo button state on history events
+editor.on('change', updateUndoButton);
+// 'historyAdded' isn't a standard event in CM5 logic usually, 'change' covers most. 
+// We can also poll or wrap, but 'change' is good enough.
 
 /**
  * Checks if the current device is a mobile device based on window width
@@ -16,151 +29,9 @@ function isMobile() {
 }
 
 function getEditorContent() {
-    return editor.innerText.replaceAll(' ', '');
+    return editor.getValue();
 }
 
-/**
- * Handles input events in the editor, including syntax highlighting and cursor position
- * @param {InputEvent} event - The input event object
- */
-function handleEditorInput(event) {
-    const lastCharInput = event.data;
-    // whitelabel some characters that are not important to highlight (like spaces and tabs)
-    if (!lastCharInput || lastCharInput.match(/[ \t]/)) {
-        updateLineNumbers();
-        return;
-    }
-    //  debounce(() => {
-
-    try {
-        const text = getEditorContent();
-        if (text.trim()) {
-            let range = saveCursorPosition();
-            // Use the modified highlightJSON function
-            editor.innerHTML = highlightJSON(text);
-            restoreCursorPosition(range);
-        }
-    } catch (e) {
-        console.log('Highlighting error:', e);
-    }
-    //}, 1500)();
-}
-
-/**
- * Handles paste events, formatting JSON if valid
- * @param {ClipboardEvent} e - The clipboard event object
- */
-function handlePaste(e) {
-    e.preventDefault();
-    let text = (e.clipboardData || window.clipboardData).getData('text/plain');
-
-    // Sanitize the pasted text
-    text = sanitizePastedText(text);
-
-    try {
-        const parsed = JSON.parse(text);
-        text = JSON.stringify(parsed, null, 2); // Format with 2 spaces
-    } catch (e) {
-        // If parsing fails, keep the sanitized text as-is
-    }
-
-    const highlighted = highlightJSON(text);
-
-    // Use Range and Selection APIs to insert HTML
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-    selection.deleteFromDocument();
-    const range = selection.getRangeAt(0);
-    const fragment = range.createContextualFragment(highlighted);
-    range.insertNode(fragment);
-
-    updateLineNumbers();
-}
-
-/**
- * Sanitizes pasted text by normalizing whitespace
- * @param {string} text - The text to sanitize
- * @returns {string} Sanitized text
- */
-function sanitizePastedText(text) {
-    return text
-        // Replace tabs with spaces
-        .replace(/\t/g, '  ')
-        // Replace multiple spaces with two spaces
-        .replace(/ {3,}/g, '  ')
-        // Replace multiple newlines with single newlines
-        .replace(/\n{3,}/g, '\n\n')
-        // Remove spaces at the end of lines
-        .replace(/[ \t]+$/gm, '')
-        // Remove spaces before commas
-        .replace(/\s+,/g, ',')
-        // Ensure single space after commas
-        .replace(/,(\S)/g, ', $1')
-        // Remove spaces inside empty brackets/braces
-        .replace(/\{\s+\}/g, '{}')
-        .replace(/\[\s+\]/g, '[]')
-        // Remove spaces around colons (but keep one space after), except for URLs (://)
-        .replace(/\s*:(?!\/\/)\s*/g, ': ')
-        // Trim leading/trailing whitespace
-        .trim();
-}
-
-/**
- * Creates a debounced version of a function
- * @param {Function} func - The function to debounce
- * @param {number} wait - The debounce delay in milliseconds
- * @returns {Function} The debounced function
- */
-/*function debounce(func, wait) {
-    let timeout;
-    return function () {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, arguments), wait);
-    };
-}*/
-
-/**
- * Updates the line numbers in the editor gutter
- * Adds collapsible line indicators for objects and arrays
- * @returns {void} 
- */
-function updateLineNumbers() {
-    const contentLines = editor.querySelectorAll('.code-line');
-    const lineNumberHTML = [];
-    let i = 0;
-
-    while (i < contentLines.length) {
-        const line = contentLines[i];
-        const isCollapsed = line.classList.contains('collapsed');
-        const isHidden = line.style.display === 'none';
-        const lineText = line.textContent;
-        const isCollapsible = isObjectOrArrayLine(lineText.trim());
-        const lineClass = isCollapsible ? 'collapsible-line' : '';
-        const collapseIndicator = isCollapsible ? (isCollapsed ? '▶' : '▼') : '';
-        const lineNumber = i + 1;
-
-        if (isCollapsed) {
-            // Add line number for the collapsed line
-            lineNumberHTML.push(`<div data-line="${i}" class="${lineClass}" data-indicator="${collapseIndicator}">${lineNumber}</div>`);
-
-            // Find matching closing brace/bracket
-            const matchingLine = findMatchingBraceInEditor(Array.from(contentLines), i);
-            const collapsedLinesCount = matchingLine - i;
-
-            // Skip collapsed lines
-            i = matchingLine + 1;
-        } else if (isHidden) {
-            // Skip hidden lines (they are part of a collapsed block)
-            i++;
-        } else {
-            // Add line number for visible line
-            lineNumberHTML.push(`<div data-line="${i}" class="${lineClass}" data-indicator="${collapseIndicator}">${lineNumber}</div>`);
-            i++;
-        }
-    }
-
-    lineNumbers.innerHTML = lineNumberHTML.join('');
-}
 /**
  * Displays a toast message to the user
  * @param {string} message - The message to display
@@ -200,15 +71,12 @@ function lintCode() {
         const content = getEditorContent();
         const parsed = JSON.parse(content);
         const jsonContent = JSON.stringify(parsed, null, 2);
-        editor.innerHTML = highlightJSON(jsonContent);
-        restoreCursorPosition(content.length);
+        editor.setValue(jsonContent);
+        // Reset cursor to start or keep? CM resets usually.
     } catch (error) {
-        console.log(error);
+        console.log("Lint error, attempting fix:", error);
         fixCode();
     }
-    // put the cursor at the end of the text
-
-    updateLineNumbers();
 }
 
 /**
@@ -218,13 +86,20 @@ function lintCode() {
 function fixCode() {
     try {
         const { jsonrepair } = JSONRepair;
-        const parsedData = jsonrepair(editor.textContent);
-        editor.innerHTML = highlightJSON(parsedData);
+        const currentContent = getEditorContent();
+        if (!currentContent.trim()) return;
+
+        // jsonrepair returns the fixed string
+        const parsedData = jsonrepair(currentContent);
+
+        // Format it
+        const parsedObj = JSON.parse(parsedData);
+        editor.setValue(JSON.stringify(parsedObj, null, 2));
+        showToast('JSON fixed and formatted', 'success');
     } catch (error) {
-        showToast(error.message, 'error');
+        handleJSONError(error);
     }
 }
-
 
 /**
  * Minifies JSON content in the editor
@@ -238,11 +113,10 @@ function minifyCode() {
     try {
         const content = getEditorContent();
         const parsed = JSON.parse(content);
-        editor.innerHTML = highlightJSON(JSON.stringify(parsed));
+        editor.setValue(JSON.stringify(parsed));
     } catch (error) {
         handleJSONError(error);
     }
-    updateLineNumbers();
 }
 
 /**
@@ -250,55 +124,21 @@ function minifyCode() {
  * @param {Error} error - The JSON parsing error
  */
 function handleJSONError(error) {
-    const position = error.message.match(/position (\d+)/);
-    let resultMessage;
-    if (position) {
-        const charIndex = parseInt(position[1]);
-        const lines = editor.textContent.substring(0, charIndex).split('\n');
-        const line = lines.length;
-        const column = lines[lines.length - 1].length + 1;
-        resultMessage = `Invalid JSON at line ${line}, column ${column}: ${error.message}`;
-    } else {
-        resultMessage = `Invalid JSON: ${error.message}`;
-    }
-    showToast(resultMessage, 'error');
+    showToast(`Invalid JSON: ${error.message}`, 'error');
 }
 
 /**
- * Clears all content from the editor and updates line numbers
+ * Clears all content from the editor
  * @returns {void}
  */
 function clearCode() {
-    editor.innerText = '';
-    updateLineNumbers();
-}
-
-
-/**
- * Applies syntax highlighting to JSON text using Prism.js
- * @param {string} text - The JSON text to highlight
- * @returns {string} HTML string with syntax highlighting
- */
-function highlightJSON(text) {
-    // Use Prism.js to highlight the JSON
-    const highlighted = Prism.highlight(text, Prism.languages.json, 'json');
-
-    // Split into lines and wrap each line in a div with the code-line class
-    const lines = highlighted.split('\n');
-    const wrappedLines = lines.map(line => {
-        // Preserve leading whitespace
-        const leadingSpaces = line.match(/^(\s*)/)[0];
-        const lineContent = line.slice(leadingSpaces.length);
-        return `<div class="code-line">${leadingSpaces}${lineContent}</div>`;
-    });
-
-    return wrappedLines.join('');
+    editor.setValue('');
+    editor.clearHistory();
 }
 
 /**
  * Copies the editor content to clipboard and shows a confirmation
  * @returns {Promise<void>} A promise that resolves when the copy is complete
- * @throws {Error} If clipboard access fails
  */
 async function copyContent() {
     try {
@@ -318,198 +158,51 @@ async function copyContent() {
     }
 }
 
-/**
- * Checks if a line contains an opening brace/bracket for an object/array
- * @param {string} line - The line of code to check
- * @returns {boolean} True if line contains { or [, false otherwise
- */
-function isObjectOrArrayLine(line) {
-    // Check if line starts with { or [ (possibly after whitespace and a property name with colon)
-    // Examples that should match:
-    //   {
-    //   [
-    //   "key": {
-    //   "key": [
-    // Examples that should NOT match:
-    //   "value with { or [ inside"
-    //   "regular": "value",
-    const trimmed = line.trim();
-    // Match lines that start with { or [, or have a property followed by { or [
-    return /^[\{\[]/.test(trimmed) || /:\s*[\{\[]/.test(trimmed);
+function undoEdit() {
+    editor.undo();
 }
 
-/**
- * Finds the matching closing brace/bracket for an opening one
- * @param {NodeList} lines - The lines of code to search through
- * @param {number} startLine - The line number containing the opening brace
- * @returns {number} The line number of the matching closing brace, or -1 if not found
- */
-function findMatchingBrace(lines, startLine) {
-    let depth = 1;
-
-    for (let i = startLine + 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        for (let char of line) {
-            if (char === '{' || char === '[') depth++;
-            if (char === '}' || char === ']') depth--;
-            if (depth === 0) return i;
-        }
+function updateUndoButton() {
+    const undoBtn = document.getElementById('undo-button');
+    const count = editor.historySize().undo;
+    if (count > 0) {
+        undoBtn.disabled = false;
+        undoBtn.style.opacity = '1';
+    } else {
+        undoBtn.disabled = true;
+        undoBtn.style.opacity = '0.5';
     }
-    return -1;
 }
-
-/**
- * Saves current cursor position in the editor
- * @returns {number} The current caret position
- */
-function saveCursorPosition() {
-    return CaretUtil.getCaretPosition(editor);
-}
-
-/**
- * Restores cursor position in the editor
- * @param {number} saved - The position to restore to
- * @returns {boolean} Always returns false
- */
-function restoreCursorPosition(saved) {
-    if (saved && editor) {
-        CaretUtil.setCaretPosition(editor, saved)
-    }
-    return false;
-}
-
-
-// CaretUtil library, based on
-// https://stackoverflow.com/questions/6249095/41034697#41034697
-var CaretUtil = {};
-
-/**
- * Set the caret position inside a contentEditable container
- */
-CaretUtil.setCaretPosition = function (container, position) {
-    if (position >= 0) {
-        var selection = window.getSelection();
-        var range = CaretUtil.createRange(container, { count: position });
-        if (range != null) {
-            range.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    }
-};
-
-
-/**
- * Get the current caret position inside a contentEditable container
- */
-CaretUtil.getCaretPosition = function (container) {
-    var selection = window.getSelection();
-    var charCount = -1;
-    var node;
-    if (selection.focusNode != null) {
-        if (CaretUtil.isDescendantOf(selection.focusNode, container)) {
-            node = selection.focusNode;
-            charCount = selection.focusOffset;
-            while (node != null) {
-                if (node == container) {
-                    break;
-                }
-                if (node.previousSibling != null) {
-                    node = node.previousSibling;
-                    charCount += node.textContent.length;
-                } else {
-                    node = node.parentNode;
-                    if (node == null) {
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    return charCount;
-};
-
-
-/**
- * Returns true if the node is a descendant (or equal to) a parent
- */
-CaretUtil.isDescendantOf = function (node, parent) {
-    while (node != null) {
-        if (node == parent) {
-            return true;
-        }
-        node = node.parentNode;
-    }
-    return false;
-};
-
-/**
- * Creates a range for setting caret position in contentEditable elements
- * @param {Node} node - The DOM node to create range in
- * @param {Object} chars - Object containing count of characters to set range end
- * @param {Range} [range] - Optional existing range to modify
- * @returns {Range} The created or modified range
- */
-CaretUtil.createRange = function (node, chars, range) {
-    if (range == null) {
-        range = window.document.createRange();
-        range.selectNode(node);
-        range.setStart(node, 0);
-    }
-    if (chars.count == 0) {
-        range.setEnd(node, chars.count);
-    } else if (node != null && chars.count > 0) {
-        if (node.nodeType == 3) {
-            if (node.textContent.length < chars.count) {
-                chars.count -= node.textContent.length;
-            } else {
-                range.setEnd(node, chars.count);
-                chars.count = 0;
-            }
-        } else {
-            var _g = 0;
-            var _g1 = node.childNodes.length;
-            while (_g < _g1) {
-                var lp = _g++;
-                range = CaretUtil.createRange(node.childNodes[lp], chars, range);
-                if (chars.count == 0) {
-                    break;
-                }
-            }
-        }
-    }
-    return range;
-};
 
 /**
  * Toggles full screen mode for the main section
- * Shows/hides close button based on full screen state
  */
 function toggleFullScreen() {
     const section = document.querySelector('section');
     section.classList.toggle('full-screen');
     const closeButton = document.querySelector('.close-button');
     closeButton.style.display = section.classList.contains('full-screen') ? 'block' : 'none';
+    editor.refresh();
 }
 
 /**
  * Loads example JSON data into the editor
- * Formats and updates line numbers after loading
  */
 function loadExample() {
     const exampleJSON = `{
-        "name": "John Doe",
-        "age": 30,
-        "isStudent": false,
-        "courses": ["Math", "Science"],
-        "address": {
-            "street": "123 Main St",
-            "city": "Anytown"
-        }
-    }`;
-    document.getElementById('editor').innerText = exampleJSON;
-    lintCode();
-    updateLineNumbers();
+  "name": "John Doe",
+  "age": 30,
+  "isStudent": false,
+  "courses": [
+    "Math",
+    "Science"
+  ],
+  "address": {
+    "street": "123 Main St",
+    "city": "Anytown"
+  }
+}`;
+    editor.setValue(exampleJSON);
     toggleFullScreen();
 }
 
@@ -521,50 +214,30 @@ function toggleRightNav() {
     rightNav.classList.toggle('open');
 }
 
-/**
- * Closes the right navigation panel
- */
 function closeNav() {
     const rightNav = document.getElementById('rightNav');
     rightNav.classList.remove('open');
 }
 
-/**
- * Gets the storage key name for a file
- * @param {string} fileName - Name of the file
- * @returns {string} Storage key with prefix
- */
+// Storage helpers
 function getKeyName(fileName) {
     return "lnt_" + fileName;
 }
 
-/**
- * Gets the original file name from a storage key
- * @param {string} keyName - Storage key name
- * @returns {string} Original file name without prefix
- */
 function getFileName(keyName) {
     return keyName.replace("lnt_", "");
 }
 
-/**
- * Gets list of all JSON files saved in local storage
- * @returns {string[]} Array of storage keys for JSON files
- */
 function getFileList() {
     return Object.keys(localStorage).filter(key => key.startsWith("lnt_"));
 }
 
-/**
- * Saves JSON content to local storage
- * @returns {void}
- */
 function saveToLocal() {
     if (isEditorEmpty()) {
         return;
     }
 
-    const jsonContent = document.getElementById('editor').innerText;
+    const jsonContent = getEditorContent();
     const fileName = prompt('Enter the name of the file to save:');
     if (fileName) {
         const fileData = {
@@ -573,74 +246,60 @@ function saveToLocal() {
         };
         localStorage.setItem(getKeyName(fileName), JSON.stringify(fileData));
         updateFileList();
+        showToast(`Saved ${fileName}`, 'success');
     }
 }
 
-/**
- * Updates the file list in the right navigation panel
- * Displays either a help message if no files exist, or a list of saved files
- * with options to load, delete and rename them
- * @returns {void}
- */
 function updateFileList() {
     const fileList = document.getElementById('fileList');
-    fileList.innerHTML = ''; // Clear existing list
+    fileList.innerHTML = '';
     const files = getFileList();
 
     if (files.length === 0) {
         const helpText = document.createElement('li');
-        helpText.style.display = 'flex';
-        helpText.style.alignItems = 'center';
-        helpText.style.color = '#888';
-        helpText.style.padding = '10px';
-        helpText.style.fontSize = '14px';
-        helpText.style.lineHeight = '1.5';
-        helpText.style.whiteSpace = 'normal'; // Ensure text wraps if needed
-        helpText.style.textAlign = 'center';
+        Object.assign(helpText.style, {
+            display: 'flex', alignItems: 'center', color: '#888',
+            padding: '10px', fontSize: '14px', lineHeight: '1.5',
+            whiteSpace: 'normal', textAlign: 'center'
+        });
         helpText.innerHTML = `
             No files saved. Use the 💾 button to store your JSON data. The file will be saved in your browser's local storage. Use ⬇️ to save the file to your computer.
         `;
         fileList.appendChild(helpText);
-
-
     } else {
         for (const fileName of files) {
-            const fileData = JSON.parse(localStorage.getItem(fileName));
-
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-                <span onclick="loadFromLocal('${fileName}')">${getFileName(fileName)}</span>
-                <span class="file-date" onclick="loadFromLocal('${fileName}')">${fileData.date.toLocaleString()}</span>
-                <button onclick="deleteFile('${fileName}')">🗑️</button>
-                <button onclick="renameFile('${fileName}')">✏️</button>
-            `;
-            fileList.appendChild(listItem);
+            try {
+                const fileData = JSON.parse(localStorage.getItem(fileName));
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <span onclick="loadFromLocal('${fileName}')">${getFileName(fileName)}</span>
+                    <span class="file-date" onclick="loadFromLocal('${fileName}')">${fileData.date.toLocaleString()}</span>
+                    <button onclick="deleteFile('${fileName}')">🗑️</button>
+                    <button onclick="renameFile('${fileName}')">✏️</button>
+                `;
+                fileList.appendChild(listItem);
+            } catch (e) { }
         }
     }
 }
 
-/**
- * Loads JSON content from local storage
- * @param {string} fileName - The name of the file to load
- */
 function loadFromLocal(fileName) {
-    const fileData = JSON.parse(localStorage.getItem(fileName));
-    if (fileData) {
-        document.getElementById('editor').innerText = fileData.content;
-    } else {
-        alert('No JSON found in local storage.');
-    }
-    lintCode();
-    updateLineNumbers();
-    if (isMobile()) {
-        toggleRightNav();
+    try {
+        const fileData = JSON.parse(localStorage.getItem(fileName));
+        if (fileData) {
+            editor.setValue(fileData.content);
+            showToast(`Loaded ${getFileName(fileName)}`, 'success');
+        } else {
+            alert('No JSON found in local storage.');
+        }
+        if (isMobile()) {
+            toggleRightNav();
+        }
+    } catch (e) {
+        showToast('Error loading file', 'error');
     }
 }
 
-/**
- * Deletes a saved JSON file from local storage
- * @param {string} fileName - The name of the file to delete
- */
 function deleteFile(fileName) {
     if (confirm(`Are you sure you want to delete ${getFileName(fileName)}?`)) {
         localStorage.removeItem(fileName);
@@ -648,10 +307,6 @@ function deleteFile(fileName) {
     }
 }
 
-/**
- * Renames a saved JSON file in local storage
- * @param {string} oldName - The current name of the file to rename
- */
 function renameFile(oldName) {
     const newName = prompt('Enter the new name for the file:', getFileName(oldName));
     if (newName && newName !== getFileName(oldName)) {
@@ -662,15 +317,11 @@ function renameFile(oldName) {
     }
 }
 
-/**
- * Downloads the current JSON content as a file
- */
 function downloadJSON() {
     if (isEditorEmpty()) {
         return;
     }
-
-    const jsonContent = document.getElementById('editor').innerText;
+    const jsonContent = getEditorContent();
     const blob = new Blob([jsonContent], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -680,383 +331,85 @@ function downloadJSON() {
     URL.revokeObjectURL(url);
 }
 
-/**
- * Finds the matching closing brace/bracket for an opening one in the editor content
- * @param {Array} lines - The array of code line elements
- * @param {number} startLine - The line number containing the opening brace
- * @returns {number} The line number of the matching closing brace, or -1 if not found
- */
-function findMatchingBraceInEditor(lines, startLine) {
-    const startText = lines[startLine].textContent;
-    const startCharMatch = startText.match(/[\{\[]/);
-    if (!startCharMatch) return -1;
+// JQ Modal Logic
+const jqModal = document.getElementById('jq-modal');
+const jqInput = document.getElementById('jq-query-input');
 
-    const startChar = startCharMatch[0];
-    const endChar = startChar === '{' ? '}' : ']';
-    let depth = 1;
-
-    for (let i = startLine + 1; i < lines.length; i++) {
-        const lineText = lines[i].textContent;
-        for (let char of lineText) {
-            if (char === startChar) depth++;
-            if (char === endChar) depth--;
-            if (depth === 0) return i;
-        }
-    }
-    return -1;
-}
-
-/**
- * Toggles code block collapse state
- * @param {number} lineNumber - The line number to toggle
- */
-/**
- * Toggles collapse/expand of code blocks in the editor
- * @param {number} startLine - The line number where the block starts
- */
-function toggleCollapse(startLine) {
-    const editorLines = editor.querySelectorAll('.code-line');
-    const contentLines = Array.from(editorLines);
-
-    const matchingLine = findMatchingBraceInEditor(contentLines, startLine);
-
-    if (matchingLine === -1) {
-        return;
-    }
-
-    // Toggle collapsed state
-    const isCollapsed = contentLines[startLine].classList.contains('collapsed');
-
-    if (isCollapsed) {
-        // Expand
-        for (let i = startLine + 1; i <= matchingLine; i++) {
-            contentLines[i].style.display = '';
-        }
-        // Restore original content
-        const originalContent = contentLines[startLine].dataset.originalContent;
-        if (originalContent) {
-            contentLines[startLine].innerHTML = originalContent;
-        }
-        contentLines[startLine].classList.remove('collapsed');
-
-        // If there is a comma on the line after the collapsed block, hide it
-        if (contentLines[matchingLine + 1] && contentLines[matchingLine + 1].classList.contains('comma-line')) {
-            contentLines[matchingLine + 1].style.display = 'none';
-        }
-    } else {
-        // Collapse
-        for (let i = startLine + 1; i <= matchingLine; i++) {
-            contentLines[i].style.display = 'none';
-        }
-        // Check for comma after the block
-        const l = contentLines[matchingLine].textContent.trim();
-        let hasComma = l.length > 0 && l[l.length - 1] === ',';
-
-        if (contentLines[matchingLine + 1]) {
-            const nextLineText = contentLines[matchingLine + 1].textContent.trim();
-            if (nextLineText === ',') {
-                hasComma = true;
-                contentLines[matchingLine + 1].classList.add('comma-line');
-                contentLines[matchingLine + 1].style.display = 'none';
-            }
-        }
-
-        // Modify the starting line to indicate collapsed block
-        const lineContent = contentLines[startLine].innerHTML;
-        contentLines[startLine].dataset.originalContent = lineContent;
-
-        // Determine the opening and closing brace/bracket
-        const startText = contentLines[startLine].textContent;
-        const startCharMatch = startText.match(/[\{\[]/);
-        const startChar = startCharMatch ? startCharMatch[0] : '';
-        const endChar = startChar === '{' ? '}' : startChar === '[' ? ']' : '';
-        // check if the line has a comma
-        //hasComma = contentLines[matchingLine].textContent.trim() === ',';
-
-        // Update line content to show collapsed indicator
-        contentLines[startLine].innerHTML = lineContent.replace(
-            /([\{\[])/,
-            `$1<span class="ellipsis">...${endChar}${hasComma ? ',' : ''}</span>`
-        );
-        contentLines[startLine].classList.add('collapsed');
-    }
-    updateLineNumbers();
-}
-
-editor.addEventListener('input', handleEditorInput);
-editor.addEventListener('paste', handlePaste);
-/**
- * Handles clicks on line numbers to collapse or expand code blocks
- */
-lineNumbers.addEventListener('click', function (e) {
-    const target = e.target;
-
-    if (target.classList.contains('collapsible-line')) {
-        const lineIndex = parseInt(target.dataset.line);
-        toggleCollapse(lineIndex);
-    } else if (target.classList.contains('collapsed-lines')) {
-        // Ignore clicks on the collapsed lines placeholder
-        return;
-    }
-});
-document.addEventListener('keydown', function (event) {
-    if (event.key === 'Tab') {
-        event.preventDefault(); // Prevent focusing out of the editor
-
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const tabNode = document.createTextNode('\t'); // Two spaces for a tab
-
-        range.deleteContents();
-        range.insertNode(tabNode);
-
-        // Move cursor after the inserted tab
-        range.setStartAfter(tabNode);
-        range.setEndAfter(tabNode);
-        selection.removeAllRanges();
-        selection.addRange(range);
-    }
-    // Handle Ctrl+Z (or Cmd+Z on Mac) for undo
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
-        event.preventDefault();
-        undoEdit();
-        return;
-    }
-    if (event.ctrlKey && event.altKey) {
-        switch (event.key.toLowerCase()) {
-            case 'l':
-                lintCode();
-                break;
-            case 'm':
-                minifyCode();
-                break;
-            case 'backspace':
-                clearCode();
-                break;
-            case 'c':
-                copyContent();
-                break;
-            case 'd':
-                downloadJSON();
-                break;
-            case 's':
-                saveToLocal();
-                break;
-            case 'o':
-                toggleRightNav();
-                break;
-            case 'h':
-                toggleFullScreen();
-                break;
-            case 'q':
-                openJQModal();
-                break;
-        }
-        // prevent default behavior
-        event.preventDefault();
-    }
-});
-// Call updateFileList on page load to initialize the file list
-document.addEventListener('DOMContentLoaded', () => {
-    updateFileList();
-    // Initialize undo button state
-    updateUndoButton();
-});
-
-// ========================================
-// Undo/Redo Functions
-// ========================================
-
-/**
- * Save current editor state to history
- */
-function saveToHistory() {
-    const currentContent = getEditorContent();
-
-    // Don't save if content is the same as current history state
-    if (currentHistoryIndex >= 0 && editorHistory[currentHistoryIndex] === currentContent) {
-        return;
-    }
-
-    // Remove any "future" history if we're not at the end
-    if (currentHistoryIndex < editorHistory.length - 1) {
-        editorHistory = editorHistory.slice(0, currentHistoryIndex + 1);
-    }
-
-    // Add current state to history
-    editorHistory.push(currentContent);
-
-    // Limit history size
-    if (editorHistory.length > MAX_HISTORY_SIZE) {
-        editorHistory.shift();
-    } else {
-        currentHistoryIndex++;
-    }
-
-    updateUndoButton();
-}
-
-/**
- * Undo to previous state
- */
-function undoEdit() {
-    if (currentHistoryIndex <= 0) {
-        showToast('Nothing to undo', 'info');
-        return;
-    }
-
-    currentHistoryIndex--;
-    const previousContent = editorHistory[currentHistoryIndex];
-
-    // Restore previous content
-    editor.innerHTML = highlightJSON(previousContent);
-    updateLineNumbers();
-
-    showToast('Undone', 'success');
-    updateUndoButton();
-}
-
-/**
- * Update undo button state
- */
-function updateUndoButton() {
-    const undoButton = document.getElementById('undo-button');
-    if (undoButton) {
-        if (currentHistoryIndex > 0) {
-            undoButton.removeAttribute('disabled');
-            undoButton.style.opacity = '1';
-        } else {
-            undoButton.setAttribute('disabled', 'true');
-            undoButton.style.opacity = '0.5';
-        }
-    }
-}
-
-// ========================================
-// jq Filter Functions
-// ========================================
-
-const jqProcessor = new JQLite();
-
-/**
- * Open the jq filter modal
- */
 function openJQModal() {
-    const modal = document.getElementById('jq-modal');
-    const input = document.getElementById('jq-query-input');
-    modal.style.display = 'flex';
-    input.value = '';
-    input.focus();
+    if (isEditorEmpty()) return;
+    jqModal.style.display = 'flex';
+    jqInput.focus();
 }
 
-/**
- * Close the jq filter modal
- */
 function closeJQModal() {
-    const modal = document.getElementById('jq-modal');
-    modal.style.display = 'none';
+    jqModal.style.display = 'none';
 }
 
-/**
- * Toggle jq help section
- */
+function insertJQExample(text) {
+    jqInput.value = text;
+    jqInput.focus();
+}
+
 function toggleJQHelp() {
-    const helpSection = document.getElementById('jq-help');
-    const toggleButton = document.querySelector('.help-toggle');
-    if (helpSection.style.display === 'none') {
-        helpSection.style.display = 'block';
-        toggleButton.textContent = 'Less ▲';
-    } else {
-        helpSection.style.display = 'none';
-        toggleButton.textContent = 'More ▼';
-    }
+    const help = document.getElementById('jq-help');
+    help.style.display = help.style.display === 'none' ? 'block' : 'none';
 }
 
-/**
- * Insert a jq example into the input field
- * @param {string} example - The example query to insert
- */
-function insertJQExample(example) {
-    const input = document.getElementById('jq-query-input');
-    input.value = example;
-    input.focus();
-}
-
-/**
- * Apply a jq filter to the current editor content
- */
 function applyJQFilter() {
-    const query = document.getElementById('jq-query-input').value;
-    const currentContent = getEditorContent();
-
-    if (!query.trim()) {
-        showToast('Please enter a jq query', 'error');
-        return;
-    }
-
-    if (!currentContent.trim()) {
-        showToast('Editor is empty', 'error');
-        return;
-    }
+    const query = jqInput.value.trim();
+    if (!query) return;
 
     try {
-        // Save current state before applying filter
-        saveToHistory();
+        const content = getEditorContent();
 
-        // Apply jq filter
-        const result = jqProcessor.apply(currentContent, query);
+        // Use JQLite class
+        const jq = new JQLite();
+        const result = jq.apply(content, query);
 
         if (result.success) {
-            // Format result as JSON string
-            let outputText;
-            if (typeof result.result === 'string') {
-                outputText = result.result;
+            if (result.result !== undefined) {
+                // If result is object/array, format it. If primitive, just show it.
+                // Usually we expect JSON output.
+                let output;
+                if (typeof result.result === 'object' && result.result !== null) {
+                    output = JSON.stringify(result.result, null, 2);
+                } else {
+                    output = String(result.result);
+                }
+                editor.setValue(output);
+                closeJQModal();
+                showToast('Filter applied', 'success');
             } else {
-                outputText = JSON.stringify(result.result, null, 2);
+                showToast('Filter returned no result', 'info');
             }
-
-            // Update editor
-            const highlighted = highlightJSON(outputText);
-            editor.innerHTML = highlighted;
-            updateLineNumbers();
-
-            showToast('jq filter applied successfully (Ctrl+Z to undo)', 'success');
-            closeJQModal();
         } else {
-            showToast(`jq error: ${result.error}`, 'error');
+            showToast('Filter error: ' + result.error, 'error');
         }
-    } catch (error) {
-        showToast(`Error: ${error.message}`, 'error');
+
+    } catch (e) {
+        showToast('Error applying filter: ' + e.message, 'error');
     }
 }
 
-// Close modal when clicking outside
-document.addEventListener('click', (e) => {
-    const modal = document.getElementById('jq-modal');
-    if (e.target === modal) {
-        closeJQModal();
-    }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('jq-modal');
-        if (modal && modal.style.display === 'flex') {
-            closeJQModal();
+// Shortcuts
+document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && e.altKey) {
+        switch (e.key.toLowerCase()) {
+            case 'l': e.preventDefault(); lintCode(); break;
+            case 'm': e.preventDefault(); minifyCode(); break;
+            case 'q': e.preventDefault(); openJQModal(); break;
+            case 'backspace': // Check if this catches Ctrl+Alt+Backspace
+            case 'delete':
+                e.preventDefault(); clearCode(); break;
+            case 'c': e.preventDefault(); copyContent(); break;
+            case 'd': e.preventDefault(); downloadJSON(); break;
+            case 's': e.preventDefault(); saveToLocal(); break;
+            case 'o': e.preventDefault(); toggleRightNav(); break;
+            case 'h': // Help
+                break;
         }
     }
 });
 
-// Apply filter with Enter key in input field
-document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('jq-query-input');
-    if (input) {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                applyJQFilter();
-            }
-        });
-    }
-});
+// Initialize file list
+updateFileList();

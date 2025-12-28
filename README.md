@@ -7,8 +7,12 @@ A lightweight, browser-based tool to lint, format, fix, minify, filter, and pret
 
 ### Core Functionality
 - **JSON Linting**: Validate JSON syntax and highlight errors, showing the exact line and character of the issue.
-- **Fix JSON**: Automatically corrects common JSON syntax errors using [JSONRepair](https://github.com/njoylab/jsonrepair), making it more forgiving for common mistakes.
-- **Syntax Highlighting**: Colorful code highlighting for better readability and error detection.
+- **Fix JSON**: Automatically corrects common JSON syntax errors using [JSONRepair](https://github.com/njoylab/jsonrepair), making it consistent and forgiving.
+- **Advanced Editor**: Powered by **CodeMirror 5**, featuring:
+  - **Dracula Theme**: High-contrast, vibrant syntax highlighting.
+  - **Code Folding**: Collapse/expand JSON objects and arrays using the gutter arrows.
+  - **Line Numbers**: Accurate line numbering for easy reference.
+  - **Bracket Matching**: Automatically highlights matching brackets.
 - **Local Storage**: Save and retrieve your JSON data automatically between sessions.
 - **Minify JSON**: Compress JSON by removing whitespace, making it easier to transmit or store.
 - **Copy to Clipboard**: Quickly copy formatted JSON to use in other applications or share with others.
@@ -120,7 +124,7 @@ The test suite includes:
 - Local storage functionality tests
 - Undo/redo history management
 
-All 93 tests should pass successfully.
+All 62 tests should pass successfully.
 
 ## Technical Details
 
@@ -147,7 +151,7 @@ This tool uses a custom lightweight implementation of jq (`jq-lite.js`) designed
 
 - **No Build Process**: Open `index.html` directly in any browser
 - **Vanilla JavaScript**: No frameworks, pure DOM manipulation
-- **Prism.js**: Syntax highlighting loaded via CDN
+- **CodeMirror 5**: Robust text editor component for code editing features
 - **JSONRepair**: Error correction library for fixing malformed JSON
 - **Local Storage**: Browser-based persistence with `lnt_` prefix
 - **JSDOM + Jest**: Testing framework for automated tests
