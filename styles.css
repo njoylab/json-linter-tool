@@ -105,35 +105,46 @@ body {
     height: 100vh;
 }
 
-/* Set up the scroll wrapper */
-.scroll-wrapper {
-    display: flex;
-    height: 100vh;
-    overflow: auto;
-    position: relative;
-}
 
-.line-numbers {
-    flex: 0 0 auto;
+/* CodeMirror Customization */
+.CodeMirror {
     height: 100%;
-    width: 40px;
-    text-align: right;
-    font-size: 14px;
-    line-height: 20px;
-    font-family: monospace;
+    flex: 1;
+    /* Grow to fill flex container */
 }
 
-.editable-div {
-    flex: 1 1 auto;
-    padding-left: 10px;
+/* Ensure global box-sizing for sanity */
+*,
+*:before,
+*:after {
     box-sizing: border-box;
-    font-size: 14px;
-    line-height: 20px;
-    font-family: monospace;
 }
 
-.editable-div::-webkit-scrollbar {
-    display: none;
+.editor-container {
+    padding: 0;
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Scroll wrapper takes remaining space */
+.scroll-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+/* Editor takes all space in wrapper */
+#editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .floating-buttons {
@@ -156,30 +167,9 @@ body {
     }
 }
 
-/* Legacy JSON highlighting classes - now handled by Prism.js
-.json-string {
-    color: #22863a;
-}
 
-.json-number {
-    color: #005cc5;
-}
 
-.json-boolean,
-.json-null {
-    color: var(--error-color);
-}
 
-.json-key {
-    color: #e36209;
-}
-*/
-
-.editable-div[contenteditable=true]:empty:before {
-    content: 'Enter JSON here';
-    color: #888;
-    font-style: italic;
-}
 
 .toast {
     position: absolute;
@@ -243,31 +233,19 @@ body {
 
 .button-container {
     margin-bottom: 40px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
 }
 
 .button-container button {
-    white-space: normal;
-    /* Allow text to wrap */
-    width: 120px;
-    /* Adjust width as needed */
+    white-space: nowrap;
     text-align: center;
-    /* Center align text */
-
+    padding: 8px 12px;
+    width: auto;
 }
 
-.hidden-line {
-    display: none;
-}
 
-.collapsed-line {
-    color: var(--primary-color);
-}
-
-.collapse-placeholder {
-    color: #888;
-    font-style: italic;
-    cursor: pointer;
-}
 
 .full-screen {
     position: fixed;
@@ -444,39 +422,7 @@ footer {
 
 /* Add these styles to your styles.css */
 
-.code-line {
-    white-space: pre-wrap;
-}
 
-
-.line-numbers .collapsible-line {
-    cursor: pointer;
-    color: var(--primary-color);
-    background-color: var(--background-dark);
-    box-sizing: border-box;
-    padding-right: 10px;
-    width: 100%;
-    border-right: 1px solid #444;
-
-}
-
-
-/* Indicate collapsed or expanded state */
-.line-numbers .collapsible-line::after {
-    content: attr(data-indicator);
-    font-size: 8px;
-    margin-left: 2px;
-    line-height: 10px;
-    vertical-align: middle;
-}
-
-.line-numbers div:not(.collapsible-line) {
-    background-color: var(--background-dark);
-    box-sizing: border-box;
-    padding-right: 16px;
-    width: 100%;
-    border-right: 1px solid #444;
-}
 
 /* ========================================
    jq Filter Modal Styles
@@ -512,6 +458,7 @@ footer {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -522,6 +469,7 @@ footer {
         transform: translateY(-20px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
