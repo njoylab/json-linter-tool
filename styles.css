@@ -45,7 +45,8 @@
         color: var(--text-color);
     }
 
-    .copy-button svg {
+    .copy-button svg,
+    .share-button svg {
         fill: var(--text-color);
     }
 
@@ -67,6 +68,7 @@
 button,
 .floating-buttons button,
 .copy-button,
+.share-button,
 .right-nav button,
 .right-nav .button-container button,
 .right-nav .close-button-side,
@@ -85,6 +87,7 @@ button,
 button:hover,
 .floating-buttons button:hover,
 .copy-button:hover,
+.share-button:hover,
 .right-nav button:hover,
 .right-nav .button-container button:hover,
 .right-nav .close-button-side:hover,
@@ -201,7 +204,8 @@ body {
     opacity: 1;
 }
 
-.copy-button svg {
+.copy-button svg,
+.share-button svg {
     width: 15px;
     height: 15px;
     fill: currentColor;
@@ -209,6 +213,12 @@ body {
 }
 
 .copy-button {
+    position: absolute;
+    top: 10px;
+    right: 50px;
+}
+
+.share-button {
     position: absolute;
     top: 10px;
     right: 10px;

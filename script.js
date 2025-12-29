@@ -391,6 +391,83 @@ function applyJQFilter() {
     }
 }
 
+/**
+ * Loads JSON from URL parameter ?json=...
+ * The parameter should contain LZ-String compressed data
+ */
+function loadJSONFromURL() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const compressed = urlParams.get('json');
+
+        if (!compressed) {
+            return; // No JSON parameter in URL
+        }
+
+        // Decompress using LZ-String
+        const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
+
+        if (!decompressed) {
+            showToast('Failed to decompress JSON from URL', 'error');
+            return;
+        }
+
+        // Validate it's valid JSON
+        try {
+            JSON.parse(decompressed);
+            editor.setValue(decompressed);
+            // Format it nicely
+            lintCode();
+            showToast('JSON loaded from URL', 'success');
+        } catch (e) {
+            showToast('Invalid JSON in URL parameter', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading JSON from URL:', error);
+        showToast('Error loading JSON from URL', 'error');
+    }
+}
+
+/**
+ * Generates a shareable URL with compressed JSON and copies to clipboard
+ */
+function shareJSON() {
+    if (isEditorEmpty()) {
+        return;
+    }
+
+    try {
+        const content = getEditorContent();
+
+        // Validate JSON first
+        try {
+            JSON.parse(content);
+        } catch (e) {
+            showToast('Please fix JSON errors before sharing', 'error');
+            return;
+        }
+
+        // Compress using LZ-String
+        const compressed = LZString.compressToEncodedURIComponent(content);
+
+        // Generate URL
+        const baseUrl = window.location.origin + window.location.pathname;
+        const shareUrl = `${baseUrl}?json=${compressed}`;
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast(`Shareable URL copied to clipboard (${shareUrl.length} chars)`, 'success');
+        }).catch(() => {
+            // Fallback: show the URL in a prompt
+            prompt('Copy this URL to share:', shareUrl);
+        });
+
+    } catch (error) {
+        console.error('Error generating share URL:', error);
+        showToast('Error generating shareable URL', 'error');
+    }
+}
+
 // Shortcuts
 document.addEventListener('keydown', function (e) {
     if (e.ctrlKey && e.altKey) {
@@ -405,6 +482,7 @@ document.addEventListener('keydown', function (e) {
             case 'd': e.preventDefault(); downloadJSON(); break;
             case 's': e.preventDefault(); saveToLocal(); break;
             case 'o': e.preventDefault(); toggleRightNav(); break;
+            case 'u': e.preventDefault(); shareJSON(); break;
             case 'h': // Help
                 break;
         }
@@ -413,3 +491,6 @@ document.addEventListener('keydown', function (e) {
 
 // Initialize file list
 updateFileList();
+
+// Load JSON from URL parameter if present
+loadJSONFromURL();

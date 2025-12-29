@@ -97,6 +97,18 @@ beforeEach(() => {
         jsonrepair: (str) => str // Mock return same string or fixed
     };
 
+    // Mock LZString
+    window.LZString = {
+        compressToEncodedURIComponent: (str) => btoa(str).replace(/=/g, ''),
+        decompressFromEncodedURIComponent: (str) => {
+            try {
+                return atob(str);
+            } catch (e) {
+                return null;
+            }
+        }
+    };
+
     // Mock Navigator
     Object.defineProperty(window.navigator, 'clipboard', {
         value: {
@@ -190,4 +202,110 @@ test('should handle cleanup/clear', () => {
     mockCMInstance.setValue('abc');
     window.clearCode();
     expect(mockCMInstance.getValue()).toBe('');
+});
+
+test('should generate shareable URL with compressed JSON', async () => {
+    const testJSON = '{"test": "data", "number": 123}';
+    mockCMInstance.setValue(testJSON);
+
+    await window.shareJSON();
+
+    // Check that clipboard.writeText was called
+    expect(window.navigator.clipboard.writeText).toHaveBeenCalled();
+
+    // Get the URL that was copied
+    const copiedURL = window.navigator.clipboard.writeText.mock.calls[0][0];
+
+    // Verify URL structure
+    expect(copiedURL).toContain('?json=');
+
+    // Extract compressed data
+    const urlParams = new URLSearchParams(copiedURL.split('?')[1]);
+    const compressed = urlParams.get('json');
+    expect(compressed).toBeTruthy();
+
+    // Verify decompression works
+    const decompressed = window.LZString.decompressFromEncodedURIComponent(compressed);
+    expect(decompressed).toBe(testJSON);
+});
+
+test('should not share invalid JSON', async () => {
+    mockCMInstance.setValue('{invalid json}');
+
+    // Mock showToast to verify error message
+    const originalShowToast = window.showToast;
+    window.showToast = jest.fn();
+
+    await window.shareJSON();
+
+    // Should not copy to clipboard
+    expect(window.navigator.clipboard.writeText).not.toHaveBeenCalled();
+
+    // Restore original
+    window.showToast = originalShowToast;
+});
+
+test('should load JSON from URL parameter', () => {
+    const testJSON = '{"loaded": "from URL"}';
+    const compressed = window.LZString.compressToEncodedURIComponent(testJSON);
+
+    // Spy on URLSearchParams to mock the location.search
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super(`?json=${compressed}`);
+        }
+    };
+
+    // Call loadJSONFromURL
+    window.loadJSONFromURL();
+
+    // Editor should contain the decompressed JSON, formatted
+    const editorValue = mockCMInstance.getValue();
+    expect(editorValue).toContain('"loaded"');
+    expect(editorValue).toContain('"from URL"');
+
+    // Restore
+    window.URLSearchParams = originalURLSearchParams;
+});
+
+test('should handle invalid compressed data in URL', () => {
+    // Spy on URLSearchParams to mock invalid compressed data
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('?json=invalid_compressed_data');
+        }
+    };
+
+    // Mock showToast to verify error handling
+    const originalShowToast = window.showToast;
+    window.showToast = jest.fn();
+
+    window.loadJSONFromURL();
+
+    // Editor should remain empty or unchanged
+    // showToast should have been called with error
+
+    window.showToast = originalShowToast;
+    window.URLSearchParams = originalURLSearchParams;
+});
+
+test('should do nothing when no URL parameter present', () => {
+    // Spy on URLSearchParams to mock empty search
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('');
+        }
+    };
+
+    const initialValue = mockCMInstance.getValue();
+    window.loadJSONFromURL();
+
+    // Editor value should not change
+    expect(mockCMInstance.getValue()).toBe(initialValue);
+
+    // Restore
+    window.URLSearchParams = originalURLSearchParams;
 });
