@@ -162,7 +162,7 @@ Contributions are welcome! If you'd like to improve this tool or fix a bug, plea
 
 ## Feedback and Issues
 
-For feedback or to report issues, please open an issue in the [GitHub repository](https://github.com/yourusername/json-linter-tool/issues).
+For feedback or to report issues, please open an issue in the [GitHub repository](https://github.com/njoylab/json-linter-tool/issues).
 
 ## License
 
