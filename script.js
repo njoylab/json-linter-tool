@@ -392,35 +392,79 @@ function applyJQFilter() {
 }
 
 /**
- * Loads JSON from URL parameter ?json=...
- * The parameter should contain LZ-String compressed data
+ * Loads JSON from URL parameters:
+ * - ?url=... loads JSON from an external URL
+ * - ?json=... loads compressed JSON data (LZ-String)
  */
-function loadJSONFromURL() {
+async function loadJSONFromURL() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
+        const externalUrl = urlParams.get('url');
         const compressed = urlParams.get('json');
 
-        if (!compressed) {
-            return; // No JSON parameter in URL
+        // Priority 1: Load from external URL
+        if (externalUrl) {
+            try {
+                // Validate URL to prevent javascript: or data: schemes
+                const parsedUrl = new URL(externalUrl);
+                if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+                    showToast('Only HTTP/HTTPS URLs are allowed', 'error');
+                    return;
+                }
+
+                showToast('Loading JSON from URL...', 'success');
+
+                const response = await fetch(externalUrl);
+
+                if (!response.ok) {
+                    showToast(`Failed to load URL: ${response.status} ${response.statusText}`, 'error');
+                    return;
+                }
+
+                const content = await response.text();
+
+                // Validate it's valid JSON
+                try {
+                    JSON.parse(content);
+                    editor.setValue(content);
+                    // Format it nicely
+                    lintCode();
+                    showToast('JSON loaded from external URL', 'success');
+                } catch (e) {
+                    showToast('Invalid JSON from external URL', 'error');
+                }
+
+                return;
+            } catch (error) {
+                if (error.name === 'TypeError' && error.message.includes('URL')) {
+                    showToast('Invalid URL format', 'error');
+                } else {
+                    showToast(`Error loading from URL: ${error.message}`, 'error');
+                }
+                return;
+            }
         }
 
-        // Decompress using LZ-String
-        const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
+        // Priority 2: Load from compressed parameter
+        if (compressed) {
+            // Decompress using LZ-String
+            const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
 
-        if (!decompressed) {
-            showToast('Failed to decompress JSON from URL', 'error');
-            return;
-        }
+            if (!decompressed) {
+                showToast('Failed to decompress JSON from URL', 'error');
+                return;
+            }
 
-        // Validate it's valid JSON
-        try {
-            JSON.parse(decompressed);
-            editor.setValue(decompressed);
-            // Format it nicely
-            lintCode();
-            showToast('JSON loaded from URL', 'success');
-        } catch (e) {
-            showToast('Invalid JSON in URL parameter', 'error');
+            // Validate it's valid JSON
+            try {
+                JSON.parse(decompressed);
+                editor.setValue(decompressed);
+                // Format it nicely
+                lintCode();
+                showToast('JSON loaded from URL', 'success');
+            } catch (e) {
+                showToast('Invalid JSON in URL parameter', 'error');
+            }
         }
     } catch (error) {
         console.error('Error loading JSON from URL:', error);

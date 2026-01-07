@@ -245,7 +245,7 @@ test('should not share invalid JSON', async () => {
     window.showToast = originalShowToast;
 });
 
-test('should load JSON from URL parameter', () => {
+test('should load JSON from URL parameter', async () => {
     const testJSON = '{"loaded": "from URL"}';
     const compressed = window.LZString.compressToEncodedURIComponent(testJSON);
 
@@ -257,8 +257,8 @@ test('should load JSON from URL parameter', () => {
         }
     };
 
-    // Call loadJSONFromURL
-    window.loadJSONFromURL();
+    // Call loadJSONFromURL (now async)
+    await window.loadJSONFromURL();
 
     // Editor should contain the decompressed JSON, formatted
     const editorValue = mockCMInstance.getValue();
@@ -269,7 +269,7 @@ test('should load JSON from URL parameter', () => {
     window.URLSearchParams = originalURLSearchParams;
 });
 
-test('should handle invalid compressed data in URL', () => {
+test('should handle invalid compressed data in URL', async () => {
     // Spy on URLSearchParams to mock invalid compressed data
     const originalURLSearchParams = window.URLSearchParams;
     window.URLSearchParams = class extends originalURLSearchParams {
@@ -282,7 +282,7 @@ test('should handle invalid compressed data in URL', () => {
     const originalShowToast = window.showToast;
     window.showToast = jest.fn();
 
-    window.loadJSONFromURL();
+    await window.loadJSONFromURL();
 
     // Editor should remain empty or unchanged
     // showToast should have been called with error
@@ -291,7 +291,7 @@ test('should handle invalid compressed data in URL', () => {
     window.URLSearchParams = originalURLSearchParams;
 });
 
-test('should do nothing when no URL parameter present', () => {
+test('should do nothing when no URL parameter present', async () => {
     // Spy on URLSearchParams to mock empty search
     const originalURLSearchParams = window.URLSearchParams;
     window.URLSearchParams = class extends originalURLSearchParams {
@@ -301,11 +301,194 @@ test('should do nothing when no URL parameter present', () => {
     };
 
     const initialValue = mockCMInstance.getValue();
-    window.loadJSONFromURL();
+    await window.loadJSONFromURL();
 
     // Editor value should not change
     expect(mockCMInstance.getValue()).toBe(initialValue);
 
     // Restore
     window.URLSearchParams = originalURLSearchParams;
+});
+
+// Tests for external URL loading (?url=...)
+test('should load JSON from external URL', async () => {
+    const testJSON = '{"external": "data", "number": 42}';
+
+    // Mock URLSearchParams
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('?url=https://example.com/data.json');
+        }
+    };
+
+    // Mock fetch in window
+    window.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        text: async () => testJSON
+    });
+
+    await window.loadJSONFromURL();
+
+    // Should have called fetch with the URL
+    expect(window.fetch).toHaveBeenCalledWith('https://example.com/data.json');
+
+    // Editor should contain the loaded JSON, formatted
+    const editorValue = mockCMInstance.getValue();
+    expect(editorValue).toContain('"external"');
+    expect(editorValue).toContain('"data"');
+
+    // Restore
+    window.URLSearchParams = originalURLSearchParams;
+    delete window.fetch;
+});
+
+test('should reject non-HTTP/HTTPS URL schemes', async () => {
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('?url=javascript:alert(1)');
+        }
+    };
+
+    const originalShowToast = window.showToast;
+    window.showToast = jest.fn();
+
+    await window.loadJSONFromURL();
+
+    // Should show error toast
+    expect(window.showToast).toHaveBeenCalledWith('Only HTTP/HTTPS URLs are allowed', 'error');
+
+    // Editor should remain unchanged
+    expect(mockCMInstance.getValue()).toBe('');
+
+    window.showToast = originalShowToast;
+    window.URLSearchParams = originalURLSearchParams;
+});
+
+test('should handle fetch errors gracefully', async () => {
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('?url=https://example.com/notfound.json');
+        }
+    };
+
+    const originalShowToast = window.showToast;
+    window.showToast = jest.fn();
+
+    // Mock fetch to return 404
+    window.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found'
+    });
+
+    await window.loadJSONFromURL();
+
+    // Should show error toast (check last call since showToast is called twice)
+    expect(window.showToast).toHaveBeenCalledWith('Failed to load URL: 404 Not Found', 'error');
+
+    window.showToast = originalShowToast;
+    window.URLSearchParams = originalURLSearchParams;
+    delete window.fetch;
+});
+
+test('should handle invalid JSON from external URL', async () => {
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('?url=https://example.com/invalid.json');
+        }
+    };
+
+    const originalShowToast = window.showToast;
+    window.showToast = jest.fn();
+
+    // Mock fetch to return invalid JSON
+    window.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        text: async () => 'this is not valid JSON {{'
+    });
+
+    await window.loadJSONFromURL();
+
+    // Should show error toast
+    expect(window.showToast).toHaveBeenCalledWith('Invalid JSON from external URL', 'error');
+
+    window.showToast = originalShowToast;
+    window.URLSearchParams = originalURLSearchParams;
+    delete window.fetch;
+});
+
+test('should handle malformed URLs', async () => {
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('?url=not-a-valid-url');
+        }
+    };
+
+    const originalShowToast = window.showToast;
+    window.showToast = jest.fn();
+
+    await window.loadJSONFromURL();
+
+    // Should show error toast for invalid URL
+    expect(window.showToast).toHaveBeenCalledWith('Invalid URL format', 'error');
+
+    window.showToast = originalShowToast;
+    window.URLSearchParams = originalURLSearchParams;
+});
+
+test('should prioritize ?url over ?json parameter', async () => {
+    const externalJSON = '{"source": "external"}';
+    const compressedJSON = window.LZString.compressToEncodedURIComponent('{"source": "compressed"}');
+
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super(`?url=https://example.com/data.json&json=${compressedJSON}`);
+        }
+    };
+
+    // Mock fetch
+    window.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        text: async () => externalJSON
+    });
+
+    await window.loadJSONFromURL();
+
+    // Should have loaded from external URL, not compressed parameter
+    const editorValue = mockCMInstance.getValue();
+    expect(editorValue).toContain('"external"');
+    expect(editorValue).not.toContain('"compressed"');
+
+    window.URLSearchParams = originalURLSearchParams;
+    delete window.fetch;
+});
+
+test('should handle network errors when loading from URL', async () => {
+    const originalURLSearchParams = window.URLSearchParams;
+    window.URLSearchParams = class extends originalURLSearchParams {
+        constructor(search) {
+            super('?url=https://example.com/data.json');
+        }
+    };
+
+    const originalShowToast = window.showToast;
+    window.showToast = jest.fn();
+
+    // Mock fetch to throw network error
+    window.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+
+    await window.loadJSONFromURL();
+
+    // Should show error toast
+    expect(window.showToast).toHaveBeenCalledWith('Error loading from URL: Network error', 'error');
+
+    window.showToast = originalShowToast;
+    window.URLSearchParams = originalURLSearchParams;
+    delete window.fetch;
 });
