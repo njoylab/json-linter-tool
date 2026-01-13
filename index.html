@@ -4,13 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Linter, Formatter and Fixer</title>
+    <title>Fix Invalid JSON Online | JSON Linter, Formatter + jq Playground</title>
     <meta name="description"
-        content="Use this tool to lint, format, fix, minify, and prettify JSON data in your browser.">
-    <meta name="keywords" content="JSON, linter, formatter, fixer, validator, minifier, prettifier">
-    <meta property="og:title" content="JSON Linter, Formatter, and Fixer Tool">
-    <meta property="og:description" content="Validate, Format, and Optimize JSON Instantly">
-    <meta property="og:image" content="/og-image.png">
+        content="Fix invalid JSON (trailing commas, single quotes, comments), validate parse errors with line/column, and query data with jq filters. 100% client-side.">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="keywords"
+        content="fix invalid json, repair json, json parse error line column, trailing comma json, single quotes json, comments in json, jq online, jq filter json, extract field from json">
+    <link rel="canonical" href="https://jsonlint.echovalue.dev/">
+    <meta property="og:title" content="Fix Invalid JSON Online | JSON Linter + jq Playground">
+    <meta property="og:description"
+        content="Repair invalid JSON, validate parse errors with line/column, and run jq filters in your browser. No uploads.">
+    <meta property="og:url" content="https://jsonlint.echovalue.dev/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://jsonlint.echovalue.dev/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Fix Invalid JSON Online | JSON Linter + jq Playground">
+    <meta name="twitter:description"
+        content="Repair invalid JSON, validate parse errors with line/column, and run jq filters in your browser. No uploads.">
+    <meta name="twitter:image" content="https://jsonlint.echovalue.dev/og-image.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -25,6 +36,7 @@
     <script src="jsonrepair.min.js"></script>
     <script src="jq-lite.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsonlint/1.6.0/jsonlint.min.js"></script>
 
     <!-- CodeMirror 5 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
@@ -40,6 +52,86 @@
     <!-- CodeMirror Edit Addons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "JSON Linter, Formatter and Fixer",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript",
+            "url": "https://jsonlint.echovalue.dev/",
+            "description": "Fix invalid JSON, format, minify, and run jq-like filters in the browser.",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "featureList": [
+                "Repair invalid JSON (trailing commas, single quotes, comments)",
+                "Validate JSON with line/column errors",
+                "Pretty print and minify",
+                "jq-like filters in the browser",
+                "Client-side processing"
+            ]
+        }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "Is it free?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. The JSON linter, formatter, and jq playground are free to use."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Does it upload my data?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "No. All parsing, formatting, and jq filtering runs locally in your browser. Nothing is uploaded."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Can it fix invalid JSON?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. It can repair common issues like trailing commas, single quotes, comments, and missing commas or brackets."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Does it support jq?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. It supports a jq-like filter engine including .key, map(), select(), sort_by(), unique, and more."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Why does my API return invalid JSON?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Common causes include debug comments, trailing commas, unquoted keys, or mixed single quotes in logs and templates."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "How to find JSON error line/column?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Run lint to see the exact parse error with line and column details, then auto-repair or fix the highlighted section."
+                    }
+                }
+            ]
+        }
+    </script>
 </head>
 
 <body>
@@ -60,6 +152,16 @@
                     d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" />
             </svg>
         </button>
+        <div class="floating-buttons">
+            <button onclick="lintCode()">Lint <span class="shortcut">^⌥ l</span></button>
+            <button onclick="minifyCode()">Minify <span class="shortcut">^⌥ m</span></button>
+            <button onclick="openJQModal()">jq Filter <span class="shortcut">^⌥ q</span></button>
+            <button id="undo-button" onclick="undoEdit()" disabled style="opacity: 0.5;">Undo <span
+                    class="shortcut">^Z</span></button>
+            <button onclick="clearCode()">Clear <span class="shortcut">^⌥ ⌫</span></button>
+            <button onclick="toggleRightNav()">Save/Load <span class="shortcut">^⌥ o</span></button>
+            <button onclick="toggleFullScreen()">?</button>
+        </div>
     </div>
     <div class="right-nav" id="rightNav">
         <button class="close-button-side" onclick="toggleRightNav()">X</button>
@@ -124,83 +226,118 @@
             </div>
         </div>
     </div>
-
-    <div class="floating-buttons">
-        <button onclick="lintCode()">Lint <span class="shortcut">^⌥ l</span></button>
-        <button onclick="minifyCode()">Minify <span class="shortcut">^⌥ m</span></button>
-        <button onclick="openJQModal()">jq Filter <span class="shortcut">^⌥ q</span></button>
-        <button id="undo-button" onclick="undoEdit()" disabled style="opacity: 0.5;">Undo <span
-                class="shortcut">^Z</span></button>
-        <button onclick="clearCode()">Clear <span class="shortcut">^⌥ ⌫</span></button>
-        <button onclick="toggleRightNav()">Save/Load <span class="shortcut">^⌥ o</span></button>
-        <button onclick="toggleFullScreen()">?</button>
-    </div>
-    <script defer src="script.js?v=8"></script>
-    <section>
+    <main class="seo-content is-hidden" id="seo-content" aria-label="JSON Linter documentation">
         <button class="close-button" onclick="toggleFullScreen()">Close</button>
-        <h3>What is JSON?</h3>
-        <p>JSON (JavaScript Object Notation) is a lightweight data-interchange format that's easy for humans to read and
-            write. It's commonly used for transmitting data in web applications, allowing client-side and server-side
-            applications to communicate efficiently. <a href="#" onclick="loadExample()">Load an example</a></p>
+        <header class="seo-hero">
+            <p class="seo-kicker">JSON Linter, Formatter and Fixer</p>
+            <h1>Fix, Validate and Transform Broken JSON Online</h1>
+            <p class="seo-subheadline">Paste any API response or log output. We validate, auto-repair common mistakes,
+                and let you query with jq.</p>
+            <nav class="seo-toc" aria-label="On this page">
+                <a href="#fix-json">Fix JSON</a>
+                <a href="#jq-playground">jq</a>
+                <a href="#common-tasks">Common tasks</a>
+                <a href="#faq">FAQ</a>
+            </nav>
+        </header>
 
-        <h3>Features of This JSON Linter Tool</h3>
-        <p>This JSON tool provides multiple features to help you work with JSON data easily:</p>
-        <ul>
-            <li><strong>Smart Editor:</strong> Enjoy a powerful editing experience with the <strong>Dracula</strong>
-                theme, syntax highlighting, <a href="#" onclick="return false;">code folding</a> (click arrows in
-                gutter), and bracket matching.</li>
-            <li><strong>Linting:</strong> Validates JSON syntax and highlights errors, showing the exact line and
-                character of the issue.</li>
-            <li><strong>Fix JSON:</strong> Automatically corrects common JSON syntax errors using <a
-                    href="https://github.com/njoylab/jsonrepair" target="_blank">JSONRepair</a>, making it more
-                forgiving for common mistakes.</li>
-            <li><strong>Minify:</strong> Compresses JSON by removing whitespace, making it easier to transmit or store.
-            </li>
-            <li><strong>Copy to Clipboard:</strong> Quickly copy formatted JSON to use in other applications or share
-                with others.</li>
-            <li><strong>Save/Load:</strong> Save and load your JSON data to the browser's local storage.</li>
-        </ul>
+        <section class="seo-section" id="fix-json">
+            <h2>Fix Invalid JSON</h2>
+            <p>Get instant details for json parse error line column issues and repair JSON that breaks in logs,
+                templates, or API responses.</p>
+            <ul class="seo-list" id="fix-errors-list"></ul>
+            <noscript>
+                <ul class="seo-list">
+                    <li><strong>Trailing commas:</strong> Remove trailing commas in objects and arrays (trailing comma
+                        json).</li>
+                    <li><strong>Single quotes:</strong> Convert single quotes JSON into valid double-quoted strings.</li>
+                    <li><strong>Unquoted keys:</strong> Add quotes around unquoted object keys for strict JSON.</li>
+                    <li><strong>Comments in JSON:</strong> Strip // and /* */ comments (comments in json).</li>
+                    <li><strong>Missing commas:</strong> Repair missing commas between properties or array items.</li>
+                    <li><strong>Missing brackets or quotes:</strong> Close unbalanced braces, brackets, or quotes.</li>
+                </ul>
+            </noscript>
+            <p class="seo-note">All fixes run client-side in your browser. Nothing is uploaded.</p>
+            <button class="link-button" type="button" onclick="loadExample()">Load a sample JSON payload</button>
+        </section>
 
-        <h3>How to Use the JSON Linter Tool</h3>
-        <p>Simply paste your JSON data into the text area and use the buttons to lint, fix, format, or minify your JSON.
-        </p>
+        <section class="seo-section" id="jq-playground">
+            <h2>jq Online Playground</h2>
+            <p>Use this jq online playground to jq filter JSON, extract field from json payloads, and test quick
+                transformations without leaving the browser.</p>
+            <div class="jq-examples-grid" id="jq-examples-grid"></div>
+            <noscript>
+                <ul class="seo-list">
+                    <li><strong>.</strong> Return the input as-is.</li>
+                    <li><strong>.key</strong> Extract a field from JSON.</li>
+                    <li><strong>.[]</strong> Stream each item in an array.</li>
+                    <li><strong>.[0]</strong> Pick an element by index.</li>
+                    <li><strong>keys</strong> List all keys in an object.</li>
+                    <li><strong>length</strong> Count array length or string size.</li>
+                    <li><strong>map(.name)</strong> Map a field from each array item.</li>
+                    <li><strong>select(.age &gt; 18)</strong> Filter array items by condition.</li>
+                    <li><strong>sort_by(.name)</strong> Sort array items by a field.</li>
+                </ul>
+            </noscript>
+            <p class="seo-note">Click any snippet or "Try this" to prefill the editor and jq filter.</p>
+        </section>
 
-        <h3>Benefits of JSON Linting and Formatting</h3>
-        <p>Proper JSON formatting is essential for readability and collaboration. Linting helps ensure that JSON data is
-            correctly structured, preventing errors in web applications that rely on this data. Minifying JSON reduces
-            file size, improving application performance and reducing bandwidth usage.</p>
+        <section class="seo-section" id="common-tasks">
+            <h2>Common Tasks</h2>
+            <div class="cards-grid" id="common-tasks-grid"></div>
+            <noscript>
+                <ul class="seo-list">
+                    <li><strong>Pretty print:</strong> Format JSON with stable indentation for reviews and diffs.</li>
+                    <li><strong>Minify:</strong> Strip whitespace for smaller payloads and faster copy/paste.</li>
+                    <li><strong>Extract field:</strong> Use jq .key or .users[].name to extract field from json.</li>
+                    <li><strong>Filter array:</strong> Filter arrays with select(.age &gt; 18) or similar predicates.</li>
+                    <li><strong>Sort keys:</strong> Inspect or sort keys with keys | sort for quick audits.</li>
+                    <li><strong>Remove duplicates:</strong> Use unique to remove duplicate values from arrays.</li>
+                </ul>
+            </noscript>
+        </section>
 
-        <h3>FAQs</h3>
-        <p>- <strong>What is a JSON linter?</strong></p>
-        <p>A JSON linter checks JSON data for syntax errors, helping identify
-            issues that could cause problems when transmitting data between systems.</p>
-        <p>- <strong>Where can I provide feedback or report issues?</strong></p>
-        <p>For feedback or to report issues, please
-            visit our <a href="https://github.com/njoylab/json-linter-tool" target="_blank">GitHub repository</a>.
-        </p>
-        <p>- <strong>Is my JSON data sent to a server?</strong></p>
-        <p>No, all JSON processing occurs directly in your browser.
-            Your JSON data stays on the client side and is not sent to any server. This tool is entirely browser-based
-            for your privacy and security.</p>
-        <p>- <strong>What are the keyboard shortcuts?</strong></p>
-        <p>Use the following shortcuts for quick actions:</p>
-        <ul>
-            <li><strong>Lint:</strong> Ctrl + Alt + L</li>
-            <li><strong>Minify:</strong> Ctrl + Alt + M</li>
-            <li><strong>jq Filter:</strong> Ctrl + Alt + Q</li>
-            <li><strong>Undo:</strong> Ctrl + Z (or Cmd + Z on Mac)</li>
-            <li><strong>Clear:</strong> Ctrl + Alt + Del</li>
-            <li><strong>Help:</strong> Ctrl + Alt + H</li>
-            <li><strong>Copy:</strong> Ctrl + Alt + C</li>
-            <li><strong>Download:</strong> Ctrl + Alt + D</li>
-            <li><strong>Save:</strong> Ctrl + Alt + S</li>
-            <li><strong>Load:</strong> Ctrl + Alt + O</li>
-        </ul>
-        <footer>
-            <p>Made by <a href="https://www.njoylab.com" target="_blank">nJoylab.com</a> | <a
-                    href="https://github.com/njoylab/json-linter-tool" target="_blank">View source on GitHub</a></p>
+        <section class="seo-section" id="faq">
+            <h2>FAQ</h2>
+            <div class="faq-grid" id="faq-grid"></div>
+            <noscript>
+                <div class="faq-item">
+                    <h3>Is it free?</h3>
+                    <p>Yes. The JSON linter, formatter, and jq playground are free to use.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Does it upload my data?</h3>
+                    <p>No. Everything runs locally in your browser, and your JSON never leaves your device.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Can it fix invalid JSON?</h3>
+                    <p>Yes. It can repair trailing commas, single quotes, comments in JSON, and missing commas or
+                        brackets.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Does it support jq?</h3>
+                    <p>Yes. It supports jq-like filters such as .key, map(), select(), sort_by(), unique, and more.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Why does my API return invalid JSON?</h3>
+                    <p>Common causes are debug comments, trailing commas, unquoted keys, or mixed quotes in logs or
+                        templates.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>How to find JSON error line/column?</h3>
+                    <p>Run lint to see the exact parse error line and column, then fix or auto-repair the highlighted
+                        part.</p>
+                </div>
+            </noscript>
+        </section>
+
+        <footer class="seo-footer">
+            <p>Made by <a href="https://www.njoylab.com" target="_blank" rel="noopener">nJoylab.com</a> | <a
+                    href="https://github.com/njoylab/json-linter-tool" target="_blank" rel="noopener">View source on
+                    GitHub</a></p>
         </footer>
-    </section>
+    </main>
+    <script defer src="script.js?v=8"></script>
 
 
 </body>
