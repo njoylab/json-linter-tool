@@ -177,12 +177,13 @@ test('should handle JSON error and attempt fix', () => {
 });
 
 test('should toggle full screen', () => {
+    Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true });
     const section = document.querySelector('#seo-content');
     expect(section.classList.contains('full-screen')).toBe(false);
 
     window.toggleFullScreen();
 
-    expect(section.classList.contains('full-screen')).toBe(true);
+    expect(section.classList.contains('side-panel')).toBe(true);
 });
 
 test('should load example', () => {

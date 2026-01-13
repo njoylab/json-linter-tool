@@ -426,15 +426,23 @@ function updateUndoButton() {
 function toggleFullScreen() {
     const section = document.getElementById('seo-content');
     if (!section) return;
+    const isDesktop = window.innerWidth >= 1024;
     const isHidden = section.classList.contains('is-hidden');
     if (isHidden) {
         section.classList.remove('is-hidden');
         section.classList.add('is-visible');
     }
-    section.classList.toggle('full-screen');
+    if (isDesktop) {
+        section.classList.remove('full-screen');
+        section.classList.toggle('side-panel');
+    } else {
+        section.classList.remove('side-panel');
+        section.classList.toggle('full-screen');
+    }
     const closeButton = document.querySelector('.close-button');
-    closeButton.style.display = section.classList.contains('full-screen') ? 'block' : 'none';
-    if (section.classList.contains('full-screen')) {
+    const isOpen = section.classList.contains('full-screen') || section.classList.contains('side-panel');
+    closeButton.style.display = isOpen ? 'block' : 'none';
+    if (isOpen) {
         section.scrollTop = 0;
     } else {
         section.classList.remove('is-visible');

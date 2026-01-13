@@ -236,6 +236,17 @@ body {
     padding: 10px 25px
 }
 
+.seo-content.full-screen .close-button,
+.seo-content.side-panel .close-button {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    padding: 6px 12px;
+}
+
 .close-button-side {
     position: absolute;
     top: 10px;
@@ -270,6 +281,21 @@ body {
     overflow: auto;
     z-index: 1100;
     padding: 32px;
+    box-sizing: border-box;
+}
+
+.seo-content.side-panel {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 380px;
+    height: 100%;
+    background-color: var(--background-light);
+    overflow: auto;
+    z-index: 1100;
+    padding: 28px 24px 48px;
+    box-shadow: -12px 0 28px rgba(0, 0, 0, 0.18);
     box-sizing: border-box;
 }
 
@@ -518,6 +544,14 @@ body {
     .seo-content {
         height: auto;
         overflow: visible;
+    }
+
+    .seo-content.side-panel {
+        width: 100%;
+        right: auto;
+        left: 0;
+        box-shadow: none;
+        padding: 32px;
     }
 }
 
