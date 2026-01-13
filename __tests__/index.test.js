@@ -16,7 +16,7 @@ describe('index.html', () => {
 
     test('it should have a title', () => {
         const title = document.querySelector('title').textContent;
-        expect(title).toBe('JSON Linter, Formatter and Fixer');
+        expect(title).toBe('Fix Invalid JSON Online | JSON Linter, Formatter + jq Playground');
     });
 
     test('it should have a button to copy content', () => {
@@ -24,10 +24,10 @@ describe('index.html', () => {
         expect(button).not.toBeNull();
     });
 
-    test('it should have a section explaining JSON', () => {
-        const section = document.querySelector('section');
-        const heading = section.querySelector('h3');
-        expect(heading.textContent).toBe('What is JSON?');
+    test('it should have a section explaining JSON repairs', () => {
+        const section = document.querySelector('#fix-json');
+        const heading = section.querySelector('h2');
+        expect(heading.textContent).toBe('Fix Invalid JSON');
     });
 
     test('it should have a footer with a link to GitHub', () => {

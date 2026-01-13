@@ -36,10 +36,21 @@ class MockCodeMirror {
         this.events = {};
     }
     getValue() { return this.value; }
+    getDoc() {
+        return {
+            lineCount: () => this.value.split('\n').length,
+            getLine: (line) => (this.value.split('\n')[line] || ''),
+            replaceRange: (content) => {
+                this.value = content;
+            }
+        };
+    }
+    operation(callback) { callback(); }
     setValue(v) {
         this.value = v;
         this.trigger('change');
     }
+    setCursor() { }
     clearHistory() { this.history.undo = 0; }
     undo() { this.history.undo--; }
     historySize() { return this.history; }
@@ -166,7 +177,7 @@ test('should handle JSON error and attempt fix', () => {
 });
 
 test('should toggle full screen', () => {
-    const section = document.querySelector('section');
+    const section = document.querySelector('#seo-content');
     expect(section.classList.contains('full-screen')).toBe(false);
 
     window.toggleFullScreen();
