@@ -448,16 +448,16 @@ function toggleFullScreen() {
  */
 function loadExample() {
     const exampleJSON = `{
-  "name": "John Doe",
+  'name': "John Doe",
   "age": 30,
   "isStudent": false,
   "courses": [
     "Math",
-    "Science"
+    "Science",
   ],
   "address": {
     "street": "123 Main St",
-    "city": "Anytown"
+    "city": "Anytown",
   }
 }`;
     replaceEditorContent(exampleJSON);

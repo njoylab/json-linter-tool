@@ -57,15 +57,21 @@
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
             "name": "JSON Linter, Formatter and Fixer",
+            "description": "Fix invalid JSON, validate parse errors, beautify JSON, and run jq-like filters in the browser.",
             "applicationCategory": "DeveloperApplication",
-            "operatingSystem": "Any",
+            "operatingSystem": "Web",
             "browserRequirements": "Requires JavaScript",
             "url": "https://jsonlint.echovalue.dev/",
-            "description": "Fix invalid JSON, format, minify, and run jq-like filters in the browser.",
+            "author": {
+                "@type": "Organization",
+                "name": "nJoylab",
+                "url": "https://www.njoylab.com"
+            },
             "offers": {
                 "@type": "Offer",
                 "price": "0",
-                "priceCurrency": "USD"
+                "priceCurrency": "USD",
+                "name": "Free"
             },
             "featureList": [
                 "Repair invalid JSON (trailing commas, single quotes, comments)",
@@ -233,6 +239,10 @@
             <h1>Fix, Validate and Transform Broken JSON Online</h1>
             <p class="seo-subheadline">Paste any API response or log output. We validate, auto-repair common mistakes,
                 and let you query with jq.</p>
+            <p class="seo-fixes">Fixes: trailing commas · single quotes · comments · missing commas</p>
+            <div class="seo-cta-row">
+                <button class="link-button" type="button" onclick="loadExample()">Load broken sample</button>
+            </div>
             <nav class="seo-toc" aria-label="On this page">
                 <a href="#fix-json">Fix JSON</a>
                 <a href="#jq-playground">jq</a>
@@ -240,6 +250,16 @@
                 <a href="#faq">FAQ</a>
             </nav>
         </header>
+
+        <section class="seo-section seo-serp-hooks" aria-label="JSON parse errors people search for">
+            <h3>Popular JSON parse errors people search for</h3>
+            <ul class="seo-list serp-hook-list">
+                <li>Unexpected token } in JSON at position 123</li>
+                <li>Expected ',' or ']' after array element in JSON at position 45</li>
+                <li>JSON.parse: expected property name or '}' at line 1 column 2</li>
+                <li>Invalid control character at line 3 column 12</li>
+            </ul>
+        </section>
 
         <section class="seo-section" id="fix-json">
             <h2>Fix Invalid JSON</h2>
@@ -285,6 +305,8 @@
 
         <section class="seo-section" id="common-tasks">
             <h2>Common Tasks</h2>
+            <p>Use the editor as a JSON validator or JSON checker, and to beautify JSON before reviews, commits, or
+                debugging.</p>
             <div class="cards-grid" id="common-tasks-grid"></div>
             <noscript>
                 <ul class="seo-list">

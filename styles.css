@@ -310,6 +310,16 @@ body {
     line-height: 1.5;
 }
 
+.seo-fixes {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.seo-cta-row {
+    margin: 0 0 16px 0;
+}
+
 .seo-toc {
     display: flex;
     flex-wrap: wrap;
@@ -338,6 +348,16 @@ body {
 .seo-section h2 {
     margin: 0 0 12px 0;
     font-size: 20px;
+}
+
+.seo-serp-hooks h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+.serp-hook-list li {
+    margin-bottom: 6px;
+    font-size: 13px;
 }
 
 .seo-section p {
