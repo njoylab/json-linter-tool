@@ -1,3 +1,5 @@
 # Enable all crawlers
 User-agent: *
 Allow: /
+
+Sitemap: https://jsonlint.echovalue.dev/sitemap.xml
