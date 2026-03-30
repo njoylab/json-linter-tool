@@ -26,6 +26,10 @@
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="stylesheet" href="styles.css?v=10">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
+    <!-- Preconnect to CDN origins -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <!-- CodeMirror 5 CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
@@ -141,6 +145,7 @@
 </head>
 
 <body>
+    <h1 class="sr-only">JSON Linter, Formatter and Fixer - Fix, Validate and Transform Broken JSON Online</h1>
     <div class="editor-container">
         <div class="scroll-wrapper">
             <!-- CodeMirror will be initialized here -->
