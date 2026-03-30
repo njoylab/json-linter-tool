@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jq Online Playground — Filter JSON with jq in Your Browser</title>
+    <meta name="description"
+        content="Run jq filters directly in your browser. Test .key, map(), select(), sort_by(), group_by() and more with instant results. Free, no install, no uploads.">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="keywords"
+        content="jq online, jq playground, jq online playground, jq filter online, jq lint, jq formatter online, jq tester, jq sandbox, jq browser, test jq online">
+    <link rel="canonical" href="https://jsonlint.echovalue.dev/jq-playground/">
+    <meta property="og:title" content="jq Online Playground — Filter JSON in Your Browser">
+    <meta property="og:description"
+        content="Run jq filters directly in your browser. No install. No uploads. Instant results.">
+    <meta property="og:url" content="https://jsonlint.echovalue.dev/jq-playground/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://jsonlint.echovalue.dev/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="jq Online Playground — Filter JSON in Your Browser">
+    <meta name="twitter:description"
+        content="Run jq filters directly in your browser. No install. No uploads. Instant results.">
+    <meta name="twitter:image" content="https://jsonlint.echovalue.dev/og-image.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "jq Online Playground",
+        "description": "Run jq filters in your browser without installing anything. Supports .key, map(), select(), sort_by(), group_by(), and more.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "browserRequirements": "Requires JavaScript",
+        "url": "https://jsonlint.echovalue.dev/jq-playground/",
+        "author": {
+            "@type": "Organization",
+            "name": "nJoylab",
+            "url": "https://www.njoylab.com"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "name": "Free"
+        },
+        "featureList": [
+            "Run jq filters in the browser",
+            "Instant JSON output",
+            "Client-side, no uploads",
+            "Supports .key, map(), select(), sort_by(), group_by()",
+            "Interactive examples"
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is jq?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "jq is a lightweight command-line tool for processing JSON. It lets you extract fields, filter arrays, transform objects, and reshape data with a concise filter syntax. This playground runs jq-compatible filters directly in your browser."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I extract a field with jq?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Use .fieldName to extract a top-level field. For example, .name returns the value of the 'name' key. For nested fields, chain with dots: .user.address.city. For arrays, use .[] to iterate all elements or .[0] to get the first."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I filter an array with jq?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Use select() inside a pipe: .[] | select(.age > 18) returns only elements where age is greater than 18. You can combine conditions: .[] | select(.active == true and .role == \"admin\")."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Does this jq playground support all jq features?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "This playground supports the most common jq operations: field access, array iteration, pipes, map(), select(), sort_by(), group_by(), keys, values, length, unique, reverse, first, last, min, max, and more. Advanced features like @base64, try-catch, and recursive descent (..) are not supported."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is my JSON data uploaded anywhere?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No. All jq filtering runs locally in your browser using JavaScript. Your JSON never leaves your device."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I sort a JSON array with jq?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Use sort to sort a simple array, or sort_by(.field) to sort an array of objects by a specific field. For example, sort_by(.name) sorts an array of objects alphabetically by their name property. Add reverse to flip the order: sort_by(.age) | reverse."
+                }
+            }
+        ]
+    }
+    </script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --hover-color: #0056b3;
+            --success-color: #28a745;
+            --error-color: #dc7b35;
+            --text-color: #333;
+            --bg: #f0f0f0;
+            --surface: #f9f9f9;
+            --border: rgba(0,0,0,0.1);
+            --font: Verdana, Arial, sans-serif;
+            --mono: 'Courier New', Courier, monospace;
+            --radius: 6px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #1e90ff;
+                --hover-color: #1c7ed6;
+                --success-color: #38d9a9;
+                --text-color: #f1f1f1;
+                --bg: #1c1c1c;
+                --surface: #2c2c2c;
+                --border: rgba(255,255,255,0.1);
+            }
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        a { color: var(--primary-color); }
+        a:hover { text-decoration: underline; }
+
+        /* ── Header ── */
+        .site-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .site-header .brand {
+            font-weight: bold;
+            font-size: 15px;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .site-header nav {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+        }
+
+        .site-header nav a {
+            text-decoration: none;
+            opacity: 0.75;
+        }
+
+        .site-header nav a:hover { opacity: 1; text-decoration: none; }
+        .site-header nav a.active { opacity: 1; font-weight: bold; }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 32px 24px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            margin: 0 0 10px;
+            font-size: 26px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            margin: 0 0 16px;
+            opacity: 0.85;
+            line-height: 1.6;
+            max-width: 640px;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 12px;
+        }
+
+        /* ── Playground ── */
+        .playground {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px 24px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-family: var(--mono);
+            font-size: 13px;
+            white-space: nowrap;
+            opacity: 0.7;
+        }
+
+        .filter-input {
+            flex: 1;
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text-color);
+            outline: none;
+        }
+
+        .filter-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .run-btn {
+            padding: 8px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-family: var(--font);
+            white-space: nowrap;
+        }
+
+        .run-btn:hover { background: var(--hover-color); }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 640px) {
+            .panels { grid-template-columns: 1fr; }
+        }
+
+        .panel-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.6;
+            margin-bottom: 6px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 260px;
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text-color);
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea:focus { border-color: var(--primary-color); }
+
+        .output-box {
+            width: 100%;
+            min-height: 260px;
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow: auto;
+        }
+
+        .output-box.error { color: var(--error-color); border-color: var(--error-color); }
+        .output-box.success { border-color: var(--success-color); }
+
+        /* ── Quick examples ── */
+        .examples-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0 16px;
+        }
+
+        .ex-btn {
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .ex-btn:hover { border-color: var(--primary-color); background: var(--bg); }
+
+        /* ── Content sections ── */
+        .content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        .content h2 {
+            font-size: 20px;
+            margin: 36px 0 14px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .content h3 {
+            font-size: 15px;
+            margin: 20px 0 8px;
+        }
+
+        .content p {
+            margin: 0 0 12px;
+            line-height: 1.6;
+        }
+
+        /* ── Reference table ── */
+        .ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .ref-table th {
+            text-align: left;
+            padding: 8px 10px;
+            background: var(--bg);
+            border-bottom: 2px solid var(--border);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ref-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .ref-table td:first-child {
+            font-family: var(--mono);
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
+        .ref-table tr:hover td { background: var(--surface); }
+
+        /* ── FAQ ── */
+        .faq-list { display: grid; gap: 12px; }
+
+        .faq-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+        }
+
+        .faq-item h3 { margin: 0 0 6px; font-size: 15px; }
+        .faq-item p { margin: 0; font-size: 13px; line-height: 1.6; }
+
+        /* ── Footer ── */
+        .site-footer {
+            border-top: 1px solid var(--border);
+            padding: 20px 24px;
+            text-align: center;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        code {
+            font-family: var(--mono);
+            background: var(--bg);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .sr-only {
+            position: absolute; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden;
+            clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="site-header">
+        <a class="brand" href="/">JSON Linter</a>
+        <nav>
+            <a href="/">Lint / Format / Fix</a>
+            <a href="/jq-playground/" class="active">jq Playground</a>
+        </nav>
+    </header>
+
+    <div class="hero">
+        <h1>jq Online Playground</h1>
+        <p>Run jq filters directly in your browser — no install, no uploads. Paste JSON, type a filter, and get instant output.</p>
+        <div class="badge-row">
+            <span class="badge">100% client-side</span>
+            <span class="badge">No uploads</span>
+            <span class="badge">Free forever</span>
+        </div>
+    </div>
+
+    <div class="playground">
+        <div class="filter-row">
+            <span class="filter-label">jq filter:</span>
+            <input
+                type="text"
+                id="filter"
+                class="filter-input"
+                value="."
+                placeholder="e.g. .[] | select(.age > 18)"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="jq filter expression"
+            />
+            <button class="run-btn" onclick="runFilter()">Run ▶</button>
+        </div>
+
+        <div class="examples-strip" aria-label="Quick filter examples">
+            <button class="ex-btn" onclick="setFilter('.')">.</button>
+            <button class="ex-btn" onclick="setFilter('.key')">`.key`</button>
+            <button class="ex-btn" onclick="setFilter('.[]')">.[]</button>
+            <button class="ex-btn" onclick="setFilter('.[0]')">.[0]</button>
+            <button class="ex-btn" onclick="setFilter('keys')">keys</button>
+            <button class="ex-btn" onclick="setFilter('length')">length</button>
+            <button class="ex-btn" onclick="setFilter('.[] | select(.active == true)')">.[] | select()</button>
+            <button class="ex-btn" onclick="setFilter('map(.name)')">map(.name)</button>
+            <button class="ex-btn" onclick="setFilter('sort_by(.name)')">sort_by()</button>
+            <button class="ex-btn" onclick="setFilter('group_by(.role)')">group_by()</button>
+            <button class="ex-btn" onclick="setFilter('unique')">unique</button>
+            <button class="ex-btn" onclick="setFilter('reverse')">reverse</button>
+        </div>
+
+        <div class="panels">
+            <div>
+                <p class="panel-label">JSON input</p>
+                <textarea
+                    id="json-input"
+                    aria-label="JSON input"
+                    spellcheck="false"
+                >[
+  { "name": "Alice", "age": 32, "role": "admin", "active": true },
+  { "name": "Bob",   "age": 25, "role": "user",  "active": false },
+  { "name": "Carol", "age": 28, "role": "admin", "active": true }
+]</textarea>
+            </div>
+            <div>
+                <p class="panel-label">Output</p>
+                <div class="output-box" id="output" aria-live="polite" aria-label="jq filter output"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <h2>jq Filter Reference</h2>
+        <p>The most commonly used jq expressions, with examples you can click to load directly into the playground.</p>
+
+        <h3>Identity &amp; Field Access</h3>
+        <table class="ref-table">
+            <thead>
+                <tr><th>Filter</th><th>Description</th><th>Example output</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>.</td><td>Identity — returns the input unchanged</td><td>The full input</td></tr>
+                <tr><td>.key</td><td>Extract a field from an object</td><td><code>.name</code> → "Alice"</td></tr>
+                <tr><td>.key.nested</td><td>Access nested fields</td><td><code>.user.address.city</code></td></tr>
+                <tr><td>.["key"]</td><td>Access fields with special characters</td><td><code>.["first-name"]</code></td></tr>
+                <tr><td>.key?</td><td>Extract field, return null if missing (no error)</td><td><code>.missing?</code> → null</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Arrays</h3>
+        <table class="ref-table">
+            <thead>
+                <tr><th>Filter</th><th>Description</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>.[]</td><td>Iterate all elements of an array or object</td><td>Streams each element</td></tr>
+                <tr><td>.[0]</td><td>Get element by index (negative counts from end)</td><td><code>.[-1]</code> → last item</td></tr>
+                <tr><td>.[2:5]</td><td>Slice from index 2 to 4</td><td>Returns 3 elements</td></tr>
+                <tr><td>length</td><td>Number of elements in array, characters in string</td><td><code>[1,2,3] | length</code> → 3</td></tr>
+                <tr><td>first</td><td>First element of an array</td><td>Same as <code>.[0]</code></td></tr>
+                <tr><td>last</td><td>Last element of an array</td><td>Same as <code>.[-1]</code></td></tr>
+                <tr><td>reverse</td><td>Reverse the order of an array</td><td><code>[3,1,2] | reverse</code> → [2,1,3]</td></tr>
+                <tr><td>unique</td><td>Remove duplicate values</td><td><code>[1,2,1] | unique</code> → [1,2]</td></tr>
+                <tr><td>flatten</td><td>Flatten nested arrays</td><td><code>[[1,[2]],3] | flatten</code> → [1,2,3]</td></tr>
+                <tr><td>min / max</td><td>Minimum or maximum value in an array</td><td><code>[3,1,2] | max</code> → 3</td></tr>
+                <tr><td>min_by(.f) / max_by(.f)</td><td>Min/max by a field</td><td><code>min_by(.age)</code></td></tr>
+                <tr><td>add</td><td>Sum numbers, concatenate strings or arrays</td><td><code>[1,2,3] | add</code> → 6</td></tr>
+                <tr><td>indices("x")</td><td>All indices where value appears</td><td><code>"abab" | indices("a")</code> → [0,2]</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Transformation</h3>
+        <table class="ref-table">
+            <thead>
+                <tr><th>Filter</th><th>Description</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>map(f)</td><td>Apply filter to each element, return array</td><td><code>map(.name)</code> → ["Alice","Bob"]</td></tr>
+                <tr><td>map_values(f)</td><td>Apply filter to each value in object</td><td><code>map_values(. * 2)</code></td></tr>
+                <tr><td>select(cond)</td><td>Keep elements where condition is true</td><td><code>.[] | select(.age > 18)</code></td></tr>
+                <tr><td>sort</td><td>Sort a simple array</td><td><code>[3,1,2] | sort</code> → [1,2,3]</td></tr>
+                <tr><td>sort_by(.f)</td><td>Sort array of objects by a field</td><td><code>sort_by(.name)</code></td></tr>
+                <tr><td>group_by(.f)</td><td>Group elements by a field value</td><td><code>group_by(.role)</code></td></tr>
+                <tr><td>unique_by(.f)</td><td>Remove duplicates by field</td><td><code>unique_by(.id)</code></td></tr>
+                <tr><td>to_entries</td><td>Convert object to [{key, value}] array</td><td><code>{"a":1} | to_entries</code></td></tr>
+                <tr><td>from_entries</td><td>Convert [{key, value}] back to object</td><td>Inverse of to_entries</td></tr>
+                <tr><td>with_entries(f)</td><td>to_entries | map(f) | from_entries</td><td>Transform key/value pairs</td></tr>
+                <tr><td>keys</td><td>Get array of object keys, sorted</td><td><code>{"b":2,"a":1} | keys</code> → ["a","b"]</td></tr>
+                <tr><td>values</td><td>Get array of object values</td><td><code>{"a":1} | values</code> → [1]</td></tr>
+                <tr><td>has("key")</td><td>Test if object has a key</td><td><code>has("name")</code> → true/false</td></tr>
+                <tr><td>in(obj)</td><td>Test if value is a key in obj</td><td><code>"name" | in({"name":1})</code></td></tr>
+                <tr><td>contains(x)</td><td>Test if input contains x</td><td><code>[1,2,3] | contains([2])</code></td></tr>
+            </tbody>
+        </table>
+
+        <h3>Pipes &amp; Composition</h3>
+        <table class="ref-table">
+            <thead>
+                <tr><th>Filter</th><th>Description</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>f | g</td><td>Pipe output of f into g</td><td><code>.users | map(.name)</code></td></tr>
+                <tr><td>f, g</td><td>Produce outputs from both f and g</td><td><code>.a, .b</code></td></tr>
+                <tr><td>[f]</td><td>Collect all outputs of f into an array</td><td><code>[.[] | .name]</code></td></tr>
+                <tr><td>{a: .x, b: .y}</td><td>Construct a new object</td><td><code>{name: .name, age: .age}</code></td></tr>
+                <tr><td>empty</td><td>Produce no output (useful with select)</td><td>Filters out values</td></tr>
+                <tr><td>not</td><td>Boolean negation</td><td><code>select(.active | not)</code></td></tr>
+                <tr><td>type</td><td>Get the type of a value</td><td><code>"hello" | type</code> → "string"</td></tr>
+                <tr><td>tostring</td><td>Convert value to a JSON string</td><td><code>42 | tostring</code> → "42"</td></tr>
+                <tr><td>tonumber</td><td>Convert string to number</td><td><code>"42" | tonumber</code> → 42</td></tr>
+                <tr><td>ascii_downcase</td><td>Lowercase a string</td><td><code>"HELLO" | ascii_downcase</code></td></tr>
+                <tr><td>ascii_upcase</td><td>Uppercase a string</td><td><code>"hello" | ascii_upcase</code></td></tr>
+                <tr><td>ltrimstr("x") / rtrimstr("x")</td><td>Remove prefix / suffix from string</td><td><code>"foobar" | ltrimstr("foo")</code> → "bar"</td></tr>
+                <tr><td>split("x") / join("x")</td><td>Split string / join array into string</td><td><code>"a,b" | split(",")</code> → ["a","b"]</td></tr>
+                <tr><td>test("regex")</td><td>Test if string matches regex</td><td><code>"foo" | test("f.*")</code> → true</td></tr>
+            </tbody>
+        </table>
+
+        <h2>Common jq Recipes</h2>
+
+        <h3>Extract a field from every object in an array</h3>
+        <p>Given a JSON array of users, get all names:</p>
+        <pre><code>[.[] | .name]
+# or equivalently:
+map(.name)</code></pre>
+
+        <h3>Filter an array by condition</h3>
+        <p>Keep only active admins:</p>
+        <pre><code>.[] | select(.active == true and .role == "admin")</code></pre>
+
+        <h3>Reshape objects</h3>
+        <p>Create a new object with only the fields you need:</p>
+        <pre><code>map({ id: .id, fullName: .name, isAdmin: (.role == "admin") })</code></pre>
+
+        <h3>Sort and deduplicate</h3>
+        <pre><code># Sort by age, oldest first
+sort_by(.age) | reverse
+
+# Remove duplicates by email
+unique_by(.email)</code></pre>
+
+        <h3>Group and count</h3>
+        <pre><code># Group users by role, count each group
+group_by(.role) | map({ role: .[0].role, count: length })</code></pre>
+
+        <h3>Extract nested values safely</h3>
+        <pre><code># Returns null instead of error if path is missing
+.user?.address?.city?</code></pre>
+
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+            <div class="faq-item">
+                <h3>What is jq?</h3>
+                <p>jq is a lightweight command-line tool for processing JSON. It lets you extract fields, filter arrays, transform objects, and reshape data with a concise filter syntax. This playground runs jq-compatible filters directly in your browser — no install needed.</p>
+            </div>
+            <div class="faq-item">
+                <h3>How do I extract a field with jq?</h3>
+                <p>Use <code>.fieldName</code> to extract a top-level field. For example, <code>.name</code> returns the value of the <code>name</code> key. For nested fields, chain with dots: <code>.user.address.city</code>. For arrays, use <code>.[]</code> to iterate all elements or <code>.[0]</code> to get the first.</p>
+            </div>
+            <div class="faq-item">
+                <h3>How do I filter an array with jq?</h3>
+                <p>Use <code>select()</code> inside a pipe: <code>.[] | select(.age &gt; 18)</code> returns only elements where age is greater than 18. You can combine conditions: <code>.[] | select(.active == true and .role == "admin")</code>.</p>
+            </div>
+            <div class="faq-item">
+                <h3>How do I sort a JSON array with jq?</h3>
+                <p>Use <code>sort</code> to sort a simple array, or <code>sort_by(.field)</code> to sort an array of objects by a specific property. Add <code>| reverse</code> to flip the order. Example: <code>sort_by(.age) | reverse</code> sorts oldest-first.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Does this jq playground support all jq features?</h3>
+                <p>It supports the most common operations: field access, array iteration, pipes, <code>map()</code>, <code>select()</code>, <code>sort_by()</code>, <code>group_by()</code>, <code>keys</code>, <code>values</code>, <code>length</code>, <code>unique</code>, <code>reverse</code>, <code>first</code>, <code>last</code>, <code>min</code>, <code>max</code>, and more. Advanced features like <code>@base64</code>, try-catch, and recursive descent (<code>..</code>) are not supported. For full jq, use the <a href="https://jqlang.github.io/jq/manual/" target="_blank" rel="noopener">official jq tool</a>.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Is my JSON data uploaded anywhere?</h3>
+                <p>No. All jq filtering runs locally in your browser using JavaScript. Your JSON never leaves your device.</p>
+            </div>
+        </div>
+
+        <h2>Need to lint or fix your JSON first?</h2>
+        <p>If your JSON has syntax errors — trailing commas, single quotes, comments, missing brackets — use the <a href="/">JSON Linter and Fixer</a> to repair it before filtering.</p>
+
+    </div>
+
+    <footer class="site-footer">
+        <p>Made by <a href="https://www.njoylab.com" target="_blank" rel="noopener">nJoylab.com</a> |
+           <a href="/">JSON Linter &amp; Formatter</a> |
+           <a href="https://github.com/njoylab/json-linter-tool" target="_blank" rel="noopener">View source on GitHub</a> |
+           <a href="https://www.echovalue.dev" target="_blank" rel="noopener">Other tools</a></p>
+    </footer>
+
+    <script src="../jq-lite.js" defer></script>
+    <script>
+        const jq = new JQLite();
+
+        function runFilter() {
+            const input = document.getElementById('json-input').value.trim();
+            const filter = document.getElementById('filter').value.trim();
+            const output = document.getElementById('output');
+
+            if (!input) {
+                output.textContent = 'Paste JSON in the left panel.';
+                output.className = 'output-box';
+                return;
+            }
+
+            let parsed;
+            try {
+                parsed = JSON.parse(input);
+            } catch (e) {
+                output.textContent = 'JSON parse error: ' + e.message + '\n\nTip: use the JSON Linter at jsonlint.echovalue.dev to fix it first.';
+                output.className = 'output-box error';
+                return;
+            }
+
+            const result = jq.apply(parsed, filter || '.');
+            if (result.success) {
+                output.textContent = JSON.stringify(result.result, null, 2);
+                output.className = 'output-box success';
+            } else {
+                output.textContent = 'jq error: ' + result.error;
+                output.className = 'output-box error';
+            }
+        }
+
+        function setFilter(expr) {
+            const input = document.getElementById('filter');
+            input.value = expr;
+            input.focus();
+            runFilter();
+        }
+
+        // Run on Enter key in filter input
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('filter').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') runFilter();
+            });
+            // Run initial filter to populate output
+            runFilter();
+        });
+    </script>
+</body>
+
+</html>
