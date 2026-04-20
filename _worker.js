@@ -1,6 +1,4 @@
 const HOMEPAGE_LINKS = [
-  '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
-  '</.well-known/agent-skills/index.json>; rel="describedby"; type="application/json"',
   '</index.md>; rel="alternate"; type="text/markdown"'
 ];
 
@@ -69,10 +67,6 @@ async function withDecoratedAssetResponse(response, pathname) {
   const headers = new Headers(response.headers);
   addDiscoveryHeaders(headers, pathname);
   addCorsIfWellKnown(headers, pathname);
-
-  if (pathname === '/.well-known/api-catalog') {
-    headers.set('Content-Type', 'application/linkset+json; charset=utf-8');
-  }
 
   return new Response(response.body, {
     status: response.status,

@@ -34,4 +34,3 @@ When the browser exposes `navigator.modelContext`, the page registers these tool
 
 - Homepage: https://jsonlint.echovalue.dev/
 - jq playground: https://jsonlint.echovalue.dev/jq-playground/
-- Agent skills index: https://jsonlint.echovalue.dev/.well-known/agent-skills/index.json
