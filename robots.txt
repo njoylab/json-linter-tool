@@ -1,5 +1,6 @@
 # Enable all crawlers
 User-agent: *
 Allow: /
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
 Sitemap: https://jsonlint.echovalue.dev/sitemap.xml

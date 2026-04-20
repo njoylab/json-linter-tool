@@ -887,6 +887,145 @@ function shareJSON() {
     }
 }
 
+function formatJSONString(input) {
+    const parsed = JSON.parse(input);
+    return JSON.stringify(parsed, null, 2);
+}
+
+function minifyJSONString(input) {
+    const parsed = JSON.parse(input);
+    return JSON.stringify(parsed);
+}
+
+function repairJSONString(input) {
+    const { jsonrepair } = JSONRepair;
+    const repaired = jsonrepair(input);
+    return formatJSONString(repaired);
+}
+
+function runJQQuery(input, query) {
+    const jq = new JQLite();
+    const result = jq.apply(input, query);
+
+    if (!result.success) {
+        throw new Error(result.error);
+    }
+
+    if (typeof result.result === 'object' && result.result !== null) {
+        return JSON.stringify(result.result, null, 2);
+    }
+
+    return String(result.result);
+}
+
+function getToolInput(input) {
+    if (typeof input === 'string' && input.trim()) {
+        return input;
+    }
+
+    return getEditorContent();
+}
+
+async function registerWebMCPTools() {
+    const modelContext = navigator.modelContext;
+    if (!modelContext || typeof modelContext.provideContext !== 'function') {
+        return;
+    }
+
+    try {
+        await modelContext.provideContext({
+            name: 'JSON Linter Tool',
+            description: 'Client-side JSON linting, repair, minification, and jq-style filtering tools.',
+            context: 'Use these tools to validate, repair, transform, and filter JSON already open in the browser tab.',
+            tools: [
+                {
+                    name: 'lint_json',
+                    description: 'Validate JSON and rewrite it as formatted JSON with 2-space indentation.',
+                    inputSchema: {
+                        type: 'object',
+                        properties: {
+                            json: {
+                                type: 'string',
+                                description: 'Optional JSON string. If omitted, the current editor content is used.'
+                            }
+                        },
+                        additionalProperties: false
+                    },
+                    async execute({ json } = {}) {
+                        const output = formatJSONString(getToolInput(json));
+                        editor.setValue(output);
+                        return { json: output };
+                    }
+                },
+                {
+                    name: 'repair_json',
+                    description: 'Repair malformed JSON with JSONRepair, then return formatted JSON.',
+                    inputSchema: {
+                        type: 'object',
+                        properties: {
+                            json: {
+                                type: 'string',
+                                description: 'Optional malformed JSON string. If omitted, the current editor content is used.'
+                            }
+                        },
+                        additionalProperties: false
+                    },
+                    async execute({ json } = {}) {
+                        const output = repairJSONString(getToolInput(json));
+                        editor.setValue(output);
+                        return { json: output };
+                    }
+                },
+                {
+                    name: 'minify_json',
+                    description: 'Remove whitespace from valid JSON and return a compact string.',
+                    inputSchema: {
+                        type: 'object',
+                        properties: {
+                            json: {
+                                type: 'string',
+                                description: 'Optional JSON string. If omitted, the current editor content is used.'
+                            }
+                        },
+                        additionalProperties: false
+                    },
+                    async execute({ json } = {}) {
+                        const output = minifyJSONString(getToolInput(json));
+                        editor.setValue(output);
+                        return { json: output };
+                    }
+                },
+                {
+                    name: 'apply_jq_filter',
+                    description: 'Apply a jq-style filter to JSON using the page’s jq-lite engine.',
+                    inputSchema: {
+                        type: 'object',
+                        properties: {
+                            json: {
+                                type: 'string',
+                                description: 'Optional JSON string. If omitted, the current editor content is used.'
+                            },
+                            query: {
+                                type: 'string',
+                                description: 'jq-style query such as .users, .[], map(.name), or select(.age > 18).'
+                            }
+                        },
+                        required: ['query'],
+                        additionalProperties: false
+                    },
+                    async execute({ json, query }) {
+                        const output = runJQQuery(getToolInput(json), query);
+                        editor.setValue(output);
+                        return { json: output };
+                    }
+                }
+            ]
+        });
+    } catch (error) {
+        console.error('WebMCP registration failed:', error);
+    }
+}
+
 // Shortcuts
 document.addEventListener('keydown', function (e) {
     if (e.ctrlKey && e.altKey) {
@@ -919,3 +1058,6 @@ updateFileList();
 
 // Load JSON from URL parameter if present
 loadJSONFromURL();
+
+// Expose structured tools for browser-based agents when WebMCP is available.
+registerWebMCPTools();
