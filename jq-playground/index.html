@@ -166,10 +166,16 @@
         }
 
         .site-header .brand {
-            font-weight: bold;
+            font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+            font-weight: 600;
             font-size: 15px;
             text-decoration: none;
             color: var(--text-color);
+        }
+
+        .site-header .brand .brand-product {
+            color: #30d158;
+            font-weight: 500;
         }
 
         .site-header nav {
@@ -441,7 +447,7 @@
 
 <body>
     <header class="site-header">
-        <a class="brand" href="/">JSON Linter</a>
+        <a class="brand" href="/">echoValue <span class="brand-product">jsonlint</span></a>
         <nav>
             <a href="/">Lint / Format / Fix</a>
             <a href="/jq-playground/" class="active">jq Playground</a>
